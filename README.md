@@ -76,7 +76,7 @@ Summary:
 
 ```text
 Frontend:
-Next.js + React + TypeScript + Tailwind CSS + shadcn/ui + TanStack Query + PDF.js
+Next.js + React + TypeScript + pnpm + Tailwind CSS + shadcn/ui + TanStack Query + PDF.js
 
 Backend:
 Python 3.12 + FastAPI + Pydantic v2 + SQLAlchemy 2.0 + Alembic + uv + Ruff + Pytest

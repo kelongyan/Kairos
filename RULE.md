@@ -366,12 +366,13 @@ pytest
 - 类型检查
 - lint
 - 关键页面手动验证
+- 默认使用 `pnpm`，不使用 `npm` 作为前端包管理器
 
 常用命令示例：
 
 ```powershell
-npm run lint
-npm run build
+pnpm lint
+pnpm build
 ```
 
 ### 8.3 阶段验收

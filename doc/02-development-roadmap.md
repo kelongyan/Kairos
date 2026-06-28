@@ -115,6 +115,7 @@ ScholarPilot/
 │  ├─ components/
 │  ├─ lib/
 │  ├─ package.json
+│  ├─ pnpm-lock.yaml
 │  └─ README.md
 ├─ doc/
 │  ├─ 01-project-overview.md

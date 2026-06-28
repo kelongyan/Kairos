@@ -18,7 +18,7 @@ Next.js Web UI
 
 ```text
 Frontend:
-Next.js + React + TypeScript + Tailwind CSS + shadcn/ui + TanStack Query + PDF.js
+Next.js + React + TypeScript + pnpm + Tailwind CSS + shadcn/ui + TanStack Query + PDF.js
 
 Backend:
 Python 3.12 + FastAPI + Pydantic v2 + SQLAlchemy 2.0 + Alembic + uv + Ruff + Pytest
@@ -122,6 +122,7 @@ Next.js + React + TypeScript + Tailwind CSS + shadcn/ui + TanStack Query + PDF.j
 | Next.js | Web 应用框架 | 适合复杂 Web App，生态成熟，后续部署方便 |
 | React | UI 基础 | 适合 Chat、PDF 阅读器、引用面板等复杂交互 |
 | TypeScript | 类型约束 | 降低前后端接口变更风险 |
+| pnpm | 前端包管理 | 依赖安装快，磁盘占用低，lockfile 更适合保持环境一致 |
 | Tailwind CSS | 样式系统 | 快速构建统一、可维护的界面 |
 | shadcn/ui | UI 组件 | 适合构建专业工作台界面，可控性强 |
 | TanStack Query | 服务端状态 | 适合文档列表、任务状态、检索结果和 Chat 历史 |
@@ -150,7 +151,8 @@ frontend/
 │  ├─ api-client.ts
 │  ├─ query-client.ts
 │  └─ types.ts
-└─ package.json
+├─ package.json
+└─ pnpm-lock.yaml
 ```
 
 ---
@@ -593,6 +595,7 @@ Phase 5 可考虑：
 - Next.js
 - FastAPI
 - Python 3.12
+- pnpm
 - uv
 - Ruff
 - Pytest
