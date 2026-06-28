@@ -64,7 +64,7 @@ Known issues / notes:
 Commit:
 
 ```text
-(filled in after commit)
+da3df08 feat: scaffold Phase 0 project foundation (backend + frontend)
 ```
 
 GitHub branch:
