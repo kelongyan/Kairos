@@ -12,6 +12,33 @@ ScholarPilot 的开发必须遵循以下原则：
 - 小步迭代：每次开发只解决明确问题，不顺手扩大范围。
 - 可验证交付：没有测试或验证记录，不视为完成。
 - 可追踪推进：每个阶段必须有状态、记录、提交和 GitHub 推送。
+- 技术栈一致：开发前必须参考 `doc/03-technology-stack.md`，不得随意偏离既定技术路线。
+
+### 1.1 必读文档
+
+开始任何开发任务前，必须先阅读并遵守以下文档：
+
+| 文档 | 用途 |
+|---|---|
+| `doc/01-project-overview.md` | 项目总体规划 |
+| `doc/02-development-roadmap.md` | 阶段路线、验收标准、阶段状态 |
+| `doc/03-technology-stack.md` | 技术选型、引入顺序、替代方案和变更规则 |
+| `doc/04-development-progress.md` | 阶段状态和进度记录 |
+| `RULE.md` | 项目开发规范 |
+
+如果文档之间出现冲突，优先级如下：
+
+```text
+用户最新明确指令 > RULE.md > doc/03-technology-stack.md > doc/02-development-roadmap.md > doc/01-project-overview.md
+```
+
+### 1.2 技术栈遵循规则
+
+- 新增前端、后端、数据库、向量库、模型、任务队列、Agent 框架或解析器前，必须先检查 `doc/03-technology-stack.md`。
+- 默认使用 technology stack 文档中的推荐方案。
+- 不得因为个人偏好随意替换技术组件。
+- 如果确实需要替换，必须先说明原因、收益、风险和迁移影响。
+- 技术栈发生变化时，必须同步更新 `doc/03-technology-stack.md`。
 
 ---
 
@@ -31,7 +58,7 @@ ScholarPilot 的开发必须遵循以下原则：
 
 开始任何阶段前，必须完成：
 
-- 阅读 `doc/分阶段开发方案.md`。
+- 阅读 `doc/02-development-roadmap.md`。
 - 明确本阶段目标和不做事项。
 - 将阶段状态更新为 `In Progress`。
 - 拆分任务清单。
@@ -55,7 +82,7 @@ ScholarPilot 的开发必须遵循以下原则：
 每完成一个阶段，必须在阶段记录文件中标记。建议文件：
 
 ```text
-doc/开发进度记录.md
+doc/04-development-progress.md
 ```
 
 记录内容必须包括：
@@ -96,7 +123,7 @@ doc/开发进度记录.md
 示例：
 
 ```powershell
-git add RULE.md doc/分阶段开发方案.md
+git add RULE.md doc/02-development-roadmap.md
 git commit -m "docs: add development phases and project rules"
 ```
 
@@ -148,8 +175,8 @@ git push
 backend/
 frontend/
 doc/
+README.md
 RULE.md
-ai-research-copilot-proposal.md
 ```
 
 后端内部建议：
@@ -541,4 +568,3 @@ MVP 阶段建议目标：
 ```
 
 在该闭环稳定前，不优先开发复杂 GraphRAG、完整多 Agent、自动长篇写作和大规模部署能力。
-

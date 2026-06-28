@@ -1,4 +1,4 @@
-# ScholarPilot 分阶段开发方案
+# ScholarPilot Development Roadmap
 
 ---
 
@@ -46,7 +46,7 @@
 建议后续创建并维护：
 
 ```text
-doc/开发进度记录.md
+doc/04-development-progress.md
 ```
 
 每完成一个阶段，在该文件中记录：
@@ -117,11 +117,13 @@ ScholarPilot/
 │  ├─ package.json
 │  └─ README.md
 ├─ doc/
-│  ├─ 分阶段开发方案.md
-│  └─ 开发进度记录.md
+│  ├─ 01-project-overview.md
+│  ├─ 02-development-roadmap.md
+│  ├─ 03-technology-stack.md
+│  └─ 04-development-progress.md
+├─ README.md
 ├─ RULE.md
-├─ .gitignore
-└─ ai-research-copilot-proposal.md
+└─ .gitignore
 ```
 
 ### 4.4 验收标准
@@ -418,4 +420,3 @@ Planner Agent
 - 提交代码。
 - 推送 GitHub。
 - 再进入下一阶段。
-

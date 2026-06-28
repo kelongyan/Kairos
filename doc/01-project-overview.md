@@ -1,4 +1,4 @@
-# ScholarPilot：AI Research Copilot 智能科研助理系统规划方案
+# ScholarPilot Project Overview
 
 ---
 
