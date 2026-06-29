@@ -40,7 +40,7 @@
 | Phase 0 | Engineering Foundation | `Done` | 2026-06-29 |
 | Phase 1 | Core RAG Loop | `Done` | 2026-06-29 |
 | Phase 2 | Hybrid RAG and Trace Engine | `Done` | 2026-06-29 |
-| Phase 3 | Knowledge Base Product Layer | `Not Started` | 2026-06-29 |
+| Phase 3 | Knowledge Base Product Layer | `Done` | 2026-06-30 |
 | Phase 4 | Knowledge Operations, Auth, Audit, Evaluation, Observability | `Not Started` | 2026-06-29 |
 | Phase 5 | Multi-Agent Orchestration | `Not Started` | 2026-06-29 |
 | Phase 6 | Production, Dashboard, Extensions | `Not Started` | 2026-06-29 |
@@ -64,9 +64,9 @@
 | Reranker provider boundary | Implemented | deterministic fallback only |
 | Evidence Pack | Implemented | Returned in trace |
 | Retrieval trace | Implemented | Returned by `/chat`, not persisted |
-| Knowledge base entity | Not started | Next phase |
-| Knowledge-base-level QA | Not started | Next phase |
-| User feedback | Not started | Next phase |
+| Knowledge base entity | Done | Phase 3 |
+| Knowledge-base-level QA | Done | Phase 3 |
+| User feedback | Done | Phase 3 |
 | Knowledge gap tracking | Not started | Phase 3/4 |
 | Multi-format ingestion | Not started | PDF only |
 | User auth and RBAC | Not started | Phase 4 |
@@ -110,6 +110,45 @@ Commit:
 
 ```text
 43ee5b5 feat: align project with Kairos direction
+```
+
+---
+
+### 2026-06-30 — Phase 3 complete
+
+Completed the Knowledge Base Product Layer.
+
+Implemented in this iteration:
+
+- Added `KnowledgeBase` ORM model and Alembic migration.
+- Added `knowledge_base_id` to documents and Qdrant payloads.
+- Added knowledge base repository, schemas, service, and API routes.
+- Added knowledge-base-aware document upload and list filtering.
+- Added knowledge-base-scoped hybrid retrieval and chat support while preserving `doc_id` compatibility.
+- Added frontend knowledge base selection, creation, scoped upload, filtered document list, and KB-level chat fallback.
+- Added question logs and minimal answer feedback.
+- Added tests for knowledge base CRUD, filtered document listing, scoped upload, KB-level chat, and feedback logging.
+
+Verification recorded:
+
+```text
+cd backend
+uv run python -m pytest
+# 29 passed, 1 warning
+uv run python -m ruff check
+# All checks passed
+
+cd frontend
+pnpm lint
+# ok
+pnpm build
+# compiled successfully
+```
+
+Commit:
+
+```text
+Pending
 ```
 
 ---

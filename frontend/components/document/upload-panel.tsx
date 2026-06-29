@@ -8,15 +8,20 @@ import { apiClient } from "@/lib/api-client";
  * PDF upload panel. Uploads a source file and triggers async processing on the
  * backend, then invalidates the source list.
  */
-export function UploadPanel() {
+export function UploadPanel({
+  knowledgeBaseId,
+}: {
+  knowledgeBaseId: string | null;
+}) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: (file: File) => apiClient.uploadDocument(file),
+    mutationFn: (file: File) => apiClient.uploadDocument(file, knowledgeBaseId),
     onSuccess: () => {
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["knowledge-bases"] });
     },
     onError: (err: Error) => setError(err.message),
   });

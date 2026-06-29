@@ -32,6 +32,7 @@ def process_document(doc_id: str) -> None:
         if doc is None:
             logger.error("Document not found: %s", doc_id)
             return
+        knowledge_base_id = doc.knowledge_base_id
 
         # --- Parse ---
         document_repo.update_status(db, doc_id, "parsing")
@@ -84,7 +85,12 @@ def process_document(doc_id: str) -> None:
             }
             for c in text_chunks
         ]
-        index_chunks(doc_id, chunk_dicts, vectors)
+        index_chunks(
+            doc_id,
+            chunk_dicts,
+            vectors,
+            knowledge_base_id=knowledge_base_id,
+        )
 
         chunk_models = [
             Chunk(

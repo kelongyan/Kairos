@@ -12,6 +12,7 @@ export type DocumentStatus =
 
 export interface DocumentResponse {
   doc_id: string;
+  knowledge_base_id: string;
   title: string;
   source: string;
   status: DocumentStatus;
@@ -63,9 +64,68 @@ export interface ChatResponse {
   answer: string;
   citations: CitationResponse[];
   trace?: RetrievalTraceResponse | null;
+  question_log_id?: string | null;
 }
 
 export interface ChatRequest {
-  doc_id: string;
+  doc_id?: string | null;
+  knowledge_base_id?: string | null;
   question: string;
+}
+
+export interface KnowledgeBaseResponse {
+  knowledge_base_id: string;
+  name: string;
+  description: string;
+  status: string;
+  owner_id: string;
+  visibility: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KnowledgeBaseListResponse {
+  knowledge_bases: KnowledgeBaseResponse[];
+}
+
+export interface KnowledgeBaseCreateRequest {
+  name: string;
+  description?: string;
+  status?: string;
+  owner_id?: string;
+  visibility?: string;
+}
+
+export interface KnowledgeBaseUpdateRequest {
+  name?: string | null;
+  description?: string | null;
+  status?: string | null;
+  owner_id?: string | null;
+  visibility?: string | null;
+}
+
+export interface QuestionLogResponse {
+  question_log_id: string;
+  doc_id?: string | null;
+  knowledge_base_id?: string | null;
+  question: string;
+  answer: string;
+  answer_status: string;
+  citations_json: Record<string, unknown>[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AnswerFeedbackRequest {
+  useful?: boolean | null;
+  citation_accurate?: boolean | null;
+}
+
+export interface AnswerFeedbackResponse {
+  feedback_id: string;
+  question_log_id: string;
+  useful?: boolean | null;
+  citation_accurate?: boolean | null;
+  created_at: string;
+  updated_at: string;
 }

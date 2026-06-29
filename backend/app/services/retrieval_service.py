@@ -58,7 +58,8 @@ class RetrievalResult:
 def run_hybrid_retrieval(
     db: Session,
     *,
-    doc_id: str,
+    doc_id: str | None = None,
+    knowledge_base_id: str | None = None,
     question: str,
 ) -> RetrievalResult:
     """Run Phase 2 retrieval: rewrite -> dense+sparse -> RRF -> rerank -> evidence."""
@@ -68,7 +69,12 @@ def run_hybrid_retrieval(
 
     dense = [
         RetrievedEvidence(chunk=chunk, retrieval_source="dense")
-        for chunk in retrieve(query_vector, doc_id=doc_id, top_k=settings.retrieval_top_k)
+        for chunk in retrieve(
+            query_vector,
+            doc_id=doc_id,
+            knowledge_base_id=knowledge_base_id,
+            top_k=settings.retrieval_top_k,
+        )
     ]
     sparse = [
         RetrievedEvidence(chunk=chunk, retrieval_source="sparse")
@@ -76,6 +82,7 @@ def run_hybrid_retrieval(
             db,
             rewritten_query,
             doc_id=doc_id,
+            knowledge_base_id=knowledge_base_id,
             top_k=settings.sparse_retrieval_top_k,
         )
     ]

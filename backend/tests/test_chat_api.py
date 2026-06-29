@@ -46,10 +46,17 @@ def _fake_retrieved() -> list[RetrievedChunk]:
     ]
 
 
+def _fake_question_log():
+    class FakeQuestionLog:
+        question_log_id = "ql-1"
+
+    return FakeQuestionLog()
+
+
 def test_chat_returns_answer_and_citations(monkeypatch) -> None:
     """``POST /chat`` returns an answer grounded in retrieved evidence."""
     from app.repositories import document_repo
-    from app.services import chat_service
+    from app.services import chat_service, question_log_service
 
     class FakeDoc:
         status = "indexed"
@@ -75,6 +82,11 @@ def test_chat_returns_answer_and_citations(monkeypatch) -> None:
             return "The model uses a cross-encoder reranker."
 
     monkeypatch.setattr(chat_service, "get_llm_provider", lambda: FakeLLM())
+    monkeypatch.setattr(
+        question_log_service,
+        "create_question_log",
+        lambda *args, **kwargs: _fake_question_log(),
+    )
 
     _setup_db_override()
     try:
@@ -94,6 +106,7 @@ def test_chat_returns_answer_and_citations(monkeypatch) -> None:
     assert cite["score"] == 0.91
     assert "reranker" in cite["quote"]
     assert body["trace"]["rewritten_query"] == "What reranker is used?"
+    assert body["question_log_id"] == "ql-1"
 
 
 def test_chat_rejects_non_indexed_document(monkeypatch) -> None:
@@ -136,7 +149,7 @@ def test_chat_returns_404_for_missing_document(monkeypatch) -> None:
 def test_chat_handles_no_evidence(monkeypatch) -> None:
     """When retrieval returns nothing, the answer states evidence is insufficient."""
     from app.repositories import document_repo
-    from app.services import chat_service
+    from app.services import chat_service, question_log_service
 
     class FakeDoc:
         status = "indexed"
@@ -154,6 +167,11 @@ def test_chat_handles_no_evidence(monkeypatch) -> None:
             evidence_pack=[],
         ),
     )
+    monkeypatch.setattr(
+        question_log_service,
+        "create_question_log",
+        lambda *args, **kwargs: _fake_question_log(),
+    )
 
     _setup_db_override()
     try:
@@ -168,3 +186,56 @@ def test_chat_handles_no_evidence(monkeypatch) -> None:
     assert "Insufficient evidence" in body["answer"]
     assert body["citations"] == []
     assert body["trace"]["evidence_pack"] == []
+    assert body["question_log_id"] == "ql-1"
+
+
+def test_chat_supports_knowledge_base_scope(monkeypatch) -> None:
+    """``POST /chat`` supports knowledge-base-level questions."""
+    from app.repositories import knowledge_base_repo
+    from app.services import chat_service, question_log_service
+
+    class FakeKB:
+        knowledge_base_id = "kb-1"
+
+    monkeypatch.setattr(
+        knowledge_base_repo, "get_knowledge_base", lambda db, kb: FakeKB()
+    )
+
+    evidence = RetrievedEvidence(chunk=_fake_retrieved()[0], retrieval_source="dense")
+    monkeypatch.setattr(
+        chat_service,
+        "run_hybrid_retrieval",
+        lambda db, question, knowledge_base_id=None, doc_id=None: RetrievalResult(
+            rewritten_query=question,
+            dense_results=[],
+            sparse_results=[],
+            fused_results=[evidence],
+            reranked_results=[evidence],
+            evidence_pack=[evidence],
+        ),
+    )
+
+    class FakeLLM:
+        def chat(self, messages, **kwargs):
+            return "The model uses a cross-encoder reranker."
+
+    monkeypatch.setattr(chat_service, "get_llm_provider", lambda: FakeLLM())
+    monkeypatch.setattr(
+        question_log_service,
+        "create_question_log",
+        lambda *args, **kwargs: _fake_question_log(),
+    )
+
+    _setup_db_override()
+    try:
+        response = client.post(
+            "/chat",
+            json={"knowledge_base_id": "kb-1", "question": "What reranker is used?"},
+        )
+    finally:
+        _teardown_db_override()
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["citations"][0]["doc_id"] == "doc-1"
+    assert body["question_log_id"] == "ql-1"

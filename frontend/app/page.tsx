@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { CitationResponse, DocumentResponse, RetrievalTraceResponse } from "@/lib/types";
+import type {
+  CitationResponse,
+  DocumentResponse,
+  KnowledgeBaseResponse,
+  RetrievalTraceResponse,
+} from "@/lib/types";
+import { KnowledgeBasePanel } from "@/components/knowledge-base/knowledge-base-panel";
 import { DocumentList } from "@/components/document/document-list";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { CitationPanel } from "@/components/citation/citation-panel";
@@ -9,14 +15,18 @@ import { CitationPanel } from "@/components/citation/citation-panel";
 /**
  * Kairos home page: three-column knowledge workspace.
  *
- * Left   - source library with upload and live status
+ * Left   - knowledge bases + source library
  * Center - evidence-grounded Q&A
  * Right  - citations, evidence, and retrieval trace for the latest answer
  */
 export default function Home() {
+  const [selectedKnowledgeBase, setSelectedKnowledgeBase] =
+    useState<KnowledgeBaseResponse | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<DocumentResponse | null>(null);
   const [citations, setCitations] = useState<CitationResponse[]>([]);
   const [trace, setTrace] = useState<RetrievalTraceResponse | null>(null);
+
+  const selectedKnowledgeBaseId = selectedKnowledgeBase?.knowledge_base_id ?? null;
 
   return (
     <div className="flex flex-col flex-1 bg-zinc-50 font-sans dark:bg-black">
@@ -26,7 +36,7 @@ export default function Home() {
             Kairos
           </span>
           <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-            Phase 2 | Evidence RAG
+            Phase 3 | Knowledge Base
           </span>
         </div>
         <div className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -34,38 +44,54 @@ export default function Home() {
             <span>
               {selectedDoc.title} | <span className="text-zinc-400">{selectedDoc.status}</span>
             </span>
+          ) : selectedKnowledgeBase ? (
+            <span>
+              {selectedKnowledgeBase.name} | <span className="text-zinc-400">KB scope</span>
+            </span>
           ) : (
-            <span>No source selected</span>
+            <span>No knowledge base selected</span>
           )}
         </div>
       </header>
 
-      <div className="grid flex-1 grid-cols-1 md:grid-cols-[280px_1fr_360px]">
+      <div className="grid flex-1 grid-cols-1 md:grid-cols-[300px_1fr_360px]">
         <aside className="border-r border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-          <DocumentList
-            selectedDocId={selectedDoc?.doc_id ?? null}
-            onSelect={(doc) => {
-              setSelectedDoc(doc);
-              setCitations([]);
-              setTrace(null);
-            }}
-          />
+          <div className="flex flex-col gap-4">
+            <KnowledgeBasePanel
+              selectedKnowledgeBaseId={selectedKnowledgeBaseId}
+              onSelect={(kb) => {
+                setSelectedKnowledgeBase(kb);
+                setSelectedDoc(null);
+                setCitations([]);
+                setTrace(null);
+              }}
+            />
+            <DocumentList
+              selectedDocId={selectedDoc?.doc_id ?? null}
+              knowledgeBaseId={selectedKnowledgeBaseId}
+              onClearSelection={() => {
+                setSelectedDoc(null);
+                setCitations([]);
+                setTrace(null);
+              }}
+              onSelect={(doc) => {
+                setSelectedDoc(doc);
+                setCitations([]);
+                setTrace(null);
+              }}
+            />
+          </div>
         </aside>
 
         <main className="flex flex-col border-r border-zinc-200 dark:border-zinc-800">
-          {selectedDoc ? (
-            <ChatPanel
-              document={selectedDoc}
-              onAnswerArtifacts={({ citations: nextCitations, trace: nextTrace }) => {
-                setCitations(nextCitations);
-                setTrace(nextTrace);
-              }}
-            />
-          ) : (
-            <div className="flex flex-1 items-center justify-center p-6 text-center text-sm text-zinc-400">
-              Select or upload a source to start asking questions.
-            </div>
-          )}
+          <ChatPanel
+            document={selectedDoc}
+            knowledgeBaseId={selectedKnowledgeBaseId}
+            onAnswerArtifacts={({ citations: nextCitations, trace: nextTrace }) => {
+              setCitations(nextCitations);
+              setTrace(nextTrace);
+            }}
+          />
         </main>
 
         <aside className="bg-white p-4 dark:bg-zinc-950">

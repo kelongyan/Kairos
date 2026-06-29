@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.repositories import document_repo
+from app.repositories import document_repo, knowledge_base_repo
 from app.schemas.chat import ChatRequest, ChatResponse, CitationResponse
-from app.services import chat_service
+from app.services import chat_service, question_log_service
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -18,24 +18,39 @@ async def chat(
     request: ChatRequest,
     db: Session = Depends(get_db),
 ) -> ChatResponse:
-    """Answer a question about a document using evidence-first RAG.
-
-    The document must be indexed (``status == indexed``) before querying.
-    """
-    doc = document_repo.get_document(db, request.doc_id)
-    if doc is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Document not found: {request.doc_id}",
+    """Answer a question about a document or knowledge base."""
+    if request.doc_id:
+        doc = document_repo.get_document(db, request.doc_id)
+        if doc is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Document not found: {request.doc_id}",
+            )
+        if doc.status != "indexed":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Document is not indexed (status: {doc.status}). "
+                "Wait for indexing to complete.",
+            )
+        result = chat_service.answer_question(
+            request.question,
+            db=db,
+            doc_id=request.doc_id,
         )
-    if doc.status != "indexed":
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Document is not indexed (status: {doc.status}). "
-            "Wait for indexing to complete.",
+    else:
+        knowledge_base = knowledge_base_repo.get_knowledge_base(
+            db, request.knowledge_base_id or ""
         )
-
-    result = chat_service.answer_question(request.doc_id, request.question, db=db)
+        if knowledge_base is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Knowledge base not found: {request.knowledge_base_id}",
+            )
+        result = chat_service.answer_question(
+            request.question,
+            db=db,
+            knowledge_base_id=request.knowledge_base_id,
+        )
     citations = [
         CitationResponse(
             doc_id=c.doc_id,
@@ -47,4 +62,23 @@ async def chat(
         )
         for c in result.citations
     ]
-    return ChatResponse(answer=result.answer, citations=citations, trace=result.trace)
+    question_log_id = None
+    try:
+        question_log = question_log_service.create_question_log(
+            db,
+            doc_id=request.doc_id,
+            knowledge_base_id=request.knowledge_base_id,
+            question=request.question,
+            answer=result.answer,
+            answer_status=result.answer_status,
+            citations_json=[citation.model_dump() for citation in citations],
+        )
+        question_log_id = question_log.question_log_id
+    except Exception:  # noqa: BLE001
+        question_log_id = None
+    return ChatResponse(
+        answer=result.answer,
+        citations=citations,
+        trace=result.trace,
+        question_log_id=question_log_id,
+    )

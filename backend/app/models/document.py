@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+if TYPE_CHECKING:
+    from app.models.knowledge_base import KnowledgeBase
 
 
 def _uuid() -> str:
@@ -22,6 +26,11 @@ class Document(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     doc_id: Mapped[str] = mapped_column(String(128), unique=True, index=True, default=_uuid)
+    knowledge_base_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey("knowledge_bases.knowledge_base_id", ondelete="RESTRICT"),
+        index=True,
+    )
     title: Mapped[str] = mapped_column(String(512), default="")
     source: Mapped[str] = mapped_column(String(32), default="pdf")
     file_path: Mapped[str] = mapped_column(String(1024), default="")
@@ -37,6 +46,7 @@ class Document(Base):
     chunks: Mapped[list[Chunk]] = relationship(
         back_populates="document", cascade="all, delete-orphan"
     )
+    knowledge_base: Mapped[KnowledgeBase] = relationship(back_populates="documents")
 
 
 class Chunk(Base):

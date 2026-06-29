@@ -1,7 +1,7 @@
 """Vector store service (Qdrant).
 
 Indexes chunk embeddings and retrieves the top-k most similar chunks for a
-query, optionally filtered by ``doc_id`` for single-paper Q&A.
+query, optionally filtered by document or knowledge-base scope.
 """
 
 from __future__ import annotations
@@ -33,6 +33,8 @@ def index_chunks(
     doc_id: str,
     chunks: list[dict],
     vectors: list[list[float]],
+    *,
+    knowledge_base_id: str = "",
 ) -> None:
     """Upsert chunk embeddings into Qdrant.
 
@@ -49,6 +51,7 @@ def index_chunks(
             vector=vector,
             payload={
                 "doc_id": doc_id,
+                "knowledge_base_id": knowledge_base_id,
                 "chunk_id": chunk["chunk_id"],
                 "section": chunk.get("section", ""),
                 "page_start": chunk.get("page_start", 0),
@@ -67,6 +70,7 @@ def retrieve(
     query_vector: list[float],
     *,
     doc_id: str | None = None,
+    knowledge_base_id: str | None = None,
     top_k: int | None = None,
 ) -> list[RetrievedChunk]:
     """Retrieve the top-k most similar chunks for a query vector.
@@ -84,15 +88,23 @@ def retrieve(
     k = top_k or settings.retrieval_top_k
 
     query_filter = None
+    must_conditions: list[qdrant_models.FieldCondition] = []
     if doc_id:
-        query_filter = qdrant_models.Filter(
-            must=[
-                qdrant_models.FieldCondition(
-                    key="doc_id",
-                    match=qdrant_models.MatchValue(value=doc_id),
-                )
-            ]
+        must_conditions.append(
+            qdrant_models.FieldCondition(
+                key="doc_id",
+                match=qdrant_models.MatchValue(value=doc_id),
+            )
         )
+    if knowledge_base_id:
+        must_conditions.append(
+            qdrant_models.FieldCondition(
+                key="knowledge_base_id",
+                match=qdrant_models.MatchValue(value=knowledge_base_id),
+            )
+        )
+    if must_conditions:
+        query_filter = qdrant_models.Filter(must=must_conditions)
 
     results = qdrant_client.query_points(
         collection_name=settings.qdrant_collection,
@@ -128,6 +140,24 @@ def delete_document_vectors(doc_id: str) -> None:
                     qdrant_models.FieldCondition(
                         key="doc_id",
                         match=qdrant_models.MatchValue(value=doc_id),
+                    )
+                ]
+            )
+        ),
+    )
+
+
+def delete_knowledge_base_vectors(knowledge_base_id: str) -> None:
+    """Remove all vectors for a knowledge base."""
+    settings = get_settings()
+    qdrant_client.delete(
+        collection_name=settings.qdrant_collection,
+        points_selector=qdrant_models.FilterSelector(
+            filter=qdrant_models.Filter(
+                must=[
+                    qdrant_models.FieldCondition(
+                        key="knowledge_base_id",
+                        match=qdrant_models.MatchValue(value=knowledge_base_id),
                     )
                 ]
             )

@@ -1,1 +1,35 @@
 """Pydantic schemas (DTOs)."""
+
+from app.schemas.chat import ChatRequest, ChatResponse, CitationResponse
+from app.schemas.document import ChunkResponse, DocumentListResponse, DocumentResponse
+from app.schemas.knowledge_base import (
+    KnowledgeBaseCreateRequest,
+    KnowledgeBaseListResponse,
+    KnowledgeBaseResponse,
+    KnowledgeBaseUpdateRequest,
+)
+from app.schemas.question_log import (
+    AnswerFeedbackRequest,
+    AnswerFeedbackResponse,
+    QuestionLogCreateRequest,
+    QuestionLogListResponse,
+    QuestionLogResponse,
+)
+
+__all__ = [
+    "ChatRequest",
+    "ChatResponse",
+    "CitationResponse",
+    "ChunkResponse",
+    "DocumentListResponse",
+    "DocumentResponse",
+    "KnowledgeBaseCreateRequest",
+    "KnowledgeBaseListResponse",
+    "KnowledgeBaseResponse",
+    "KnowledgeBaseUpdateRequest",
+    "AnswerFeedbackRequest",
+    "AnswerFeedbackResponse",
+    "QuestionLogCreateRequest",
+    "QuestionLogListResponse",
+    "QuestionLogResponse",
+]

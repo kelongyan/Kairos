@@ -31,6 +31,19 @@ def list_documents(db: Session) -> list[Document]:
     return list(db.scalars(select(Document).order_by(Document.created_at.desc())))
 
 
+def list_documents_by_knowledge_base(
+    db: Session,
+    knowledge_base_id: str,
+) -> list[Document]:
+    return list(
+        db.scalars(
+            select(Document)
+            .where(Document.knowledge_base_id == knowledge_base_id)
+            .order_by(Document.created_at.desc())
+        )
+    )
+
+
 def update_status(
     db: Session,
     doc_id: str,
@@ -68,5 +81,17 @@ def list_chunks(db: Session, doc_id: str) -> list[Chunk]:
     return list(
         db.scalars(
             select(Chunk).where(Chunk.doc_id == doc_id).order_by(Chunk.chunk_index)
+        )
+    )
+
+
+def list_chunks_by_doc_ids(db: Session, doc_ids: list[str]) -> list[Chunk]:
+    if not doc_ids:
+        return []
+    return list(
+        db.scalars(
+            select(Chunk)
+            .where(Chunk.doc_id.in_(doc_ids))
+            .order_by(Chunk.doc_id, Chunk.chunk_index)
         )
     )

@@ -46,18 +46,33 @@ class ChatResult:
     answer: str
     citations: list
     trace: RetrievalTraceResponse
+    answer_status: str = "answered"
 
 
-def answer_question(doc_id: str, question: str, db=None) -> ChatResult:
-    """Answer a question about a single source using evidence-first RAG.
+def answer_question(
+    question: str,
+    *,
+    db=None,
+    doc_id: str | None = None,
+    knowledge_base_id: str | None = None,
+) -> ChatResult:
+    """Answer a question about a document or knowledge base using evidence-first RAG.
 
     Pipeline (Phase 2):
         rewrite -> dense+sparse retrieval -> RRF fusion -> evidence pack -> LLM
     """
     if db is None:
         raise ValueError("db is required for Phase 2 hybrid retrieval")
+    if not doc_id and not knowledge_base_id:
+        raise ValueError("doc_id or knowledge_base_id is required")
 
-    retrieval = run_hybrid_retrieval(db, doc_id=doc_id, question=question)
+    retrieval_kwargs: dict[str, str] = {}
+    if doc_id is not None:
+        retrieval_kwargs["doc_id"] = doc_id
+    if knowledge_base_id is not None:
+        retrieval_kwargs["knowledge_base_id"] = knowledge_base_id
+
+    retrieval = run_hybrid_retrieval(db, question=question, **retrieval_kwargs)
     if not retrieval.evidence_pack:
         return ChatResult(
             answer=(
@@ -67,6 +82,7 @@ def answer_question(doc_id: str, question: str, db=None) -> ChatResult:
             ),
             citations=[],
             trace=retrieval.to_trace(question),
+            answer_status="insufficient_evidence",
         )
 
     context = _build_context(retrieval)
@@ -81,6 +97,7 @@ def answer_question(doc_id: str, question: str, db=None) -> ChatResult:
         answer=answer,
         citations=[item.chunk for item in retrieval.evidence_pack],
         trace=retrieval.to_trace(question),
+        answer_status="answered",
     )
 
 

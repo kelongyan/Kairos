@@ -13,6 +13,7 @@ class DocumentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     doc_id: str
+    knowledge_base_id: str
     title: str
     source: str
     status: str

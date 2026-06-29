@@ -32,7 +32,7 @@ Next.js Web UI
   -> LLM / Embedding / Reranker Providers
 ```
 
-The current implementation already contains the core single-document RAG and Hybrid RAG engine. The next product phase is to add a real knowledge-base layer: knowledge base entities, document ownership, multi-document retrieval, knowledge-base-level chat, basic feedback, and knowledge-gap signals.
+The current implementation now contains the core single-document RAG and the knowledge-base layer. The next product phase is to add knowledge operations, trace persistence, evaluation, and access control.
 
 ---
 
@@ -103,7 +103,7 @@ Long term: evaluate Docling, Langfuse/Phoenix, LiteLLM, OpenSearch/Elasticsearch
 | Phase 0 | Engineering foundation | `Done` |
 | Phase 1 | Core RAG loop | `Done` |
 | Phase 2 | Hybrid RAG and trace engine | `Done` |
-| Phase 3 | Knowledge base product layer | `Not Started` |
+| Phase 3 | Knowledge base product layer | `Done` |
 | Phase 4 | Knowledge operations, auth, audit, evaluation, observability | `Not Started` |
 | Phase 5 | Multi-Agent orchestration | `Not Started` |
 | Phase 6 | Production, dashboard, extensions | `Not Started` |
@@ -111,7 +111,7 @@ Long term: evaluate Docling, Langfuse/Phoenix, LiteLLM, OpenSearch/Elasticsearch
 Current priority:
 
 ```text
-Start Phase 3 knowledge base product layer and feedback loop
+Start Phase 4 knowledge operations, trace persistence, and access control
 ```
 
 ---
@@ -129,10 +129,8 @@ Start Phase 3 knowledge base product layer and feedback loop
 
 Not implemented yet:
 
-- Knowledge base entities and document ownership.
-- Multi-document knowledge-base-level chat.
 - Multi-format ingestion beyond PDF.
-- User feedback and knowledge-gap tracking.
+- Knowledge gap tracking and richer operations views.
 - User auth, RBAC, audit logs.
 - Trace persistence and evaluation API.
 - Multi-Agent orchestration.

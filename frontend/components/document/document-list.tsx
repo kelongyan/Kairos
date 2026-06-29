@@ -20,14 +20,18 @@ const STATUS_STYLES: Record<DocumentStatus, string> = {
  */
 export function DocumentList({
   selectedDocId,
+  knowledgeBaseId,
+  onClearSelection,
   onSelect,
 }: {
   selectedDocId: string | null;
+  knowledgeBaseId: string | null;
+  onClearSelection: () => void;
   onSelect: (doc: DocumentResponse) => void;
 }) {
   const { data, isLoading, error } = useQuery({
-    queryKey: ["documents"],
-    queryFn: () => apiClient.listDocuments(),
+    queryKey: ["documents", knowledgeBaseId],
+    queryFn: () => apiClient.listDocuments(knowledgeBaseId),
     refetchInterval: (query) => {
       const docs = query.state.data?.documents ?? [];
       const inProgress = docs.some((d) =>
@@ -41,11 +45,20 @@ export function DocumentList({
 
   return (
     <div className="flex flex-col gap-3">
-      <UploadPanel />
+      <UploadPanel knowledgeBaseId={knowledgeBaseId} />
 
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-        Sources
-      </h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          Sources
+        </h2>
+        <button
+          type="button"
+          onClick={onClearSelection}
+          className="text-[10px] text-zinc-400 underline-offset-2 hover:underline"
+        >
+          {knowledgeBaseId ? "KB scope" : "all sources"}
+        </button>
+      </div>
 
       {isLoading && <p className="text-sm text-zinc-400">Loading...</p>}
       {error && (

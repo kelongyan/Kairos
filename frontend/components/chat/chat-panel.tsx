@@ -10,6 +10,7 @@ interface Message {
   content: string;
   citations?: ChatResponse["citations"];
   trace?: RetrievalTraceResponse | null;
+  questionLogId?: string | null;
 }
 
 /**
@@ -18,9 +19,11 @@ interface Message {
  */
 export function ChatPanel({
   document,
+  knowledgeBaseId,
   onAnswerArtifacts,
 }: {
-  document: DocumentResponse;
+  document: DocumentResponse | null;
+  knowledgeBaseId: string | null;
   onAnswerArtifacts: (artifacts: {
     citations: ChatResponse["citations"];
     trace: RetrievalTraceResponse | null;
@@ -28,10 +31,15 @@ export function ChatPanel({
 }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [feedbackMessageId, setFeedbackMessageId] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: (question: string) =>
-      apiClient.chat({ doc_id: document.doc_id, question }),
+      apiClient.chat({
+        doc_id: document?.doc_id ?? null,
+        knowledge_base_id: document ? null : knowledgeBaseId,
+        question,
+      }),
     onSuccess: (data: ChatResponse, question: string) => {
       setMessages((prev) => [
         ...prev,
@@ -41,6 +49,7 @@ export function ChatPanel({
           content: data.answer,
           citations: data.citations,
           trace: data.trace ?? null,
+          questionLogId: data.question_log_id ?? null,
         },
       ]);
       onAnswerArtifacts({ citations: data.citations, trace: data.trace ?? null });
@@ -54,6 +63,25 @@ export function ChatPanel({
     },
   });
 
+  const feedbackMutation = useMutation({
+    mutationFn: ({
+      questionLogId,
+      useful,
+      citationAccurate,
+    }: {
+      questionLogId: string;
+      useful: boolean;
+      citationAccurate: boolean;
+    }) =>
+      apiClient.submitFeedback(questionLogId, {
+        useful,
+        citation_accurate: citationAccurate,
+      }),
+    onSuccess: (_data, variables) => {
+      setFeedbackMessageId(variables.questionLogId);
+    },
+  });
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const question = input.trim();
@@ -62,7 +90,7 @@ export function ChatPanel({
     mutation.mutate(question);
   }
 
-  const ready = document.status === "indexed";
+  const ready = document ? document.status === "indexed" : Boolean(knowledgeBaseId);
 
   return (
     <div className="flex h-full flex-col">
@@ -70,8 +98,12 @@ export function ChatPanel({
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center text-sm text-zinc-400">
             {ready
-              ? "Ask a question about this source."
-              : `Source is ${document.status}. Please wait for indexing to complete.`}
+              ? document
+                ? "Ask a question about this source."
+                : "Ask a question about this knowledge base."
+              : document
+                ? `Source is ${document.status}. Please wait for indexing to complete.`
+                : "Select a knowledge base to start asking questions."}
           </div>
         ) : (
           <ul className="flex flex-col gap-3">
@@ -91,6 +123,41 @@ export function ChatPanel({
                     {msg.trace ? " | trace ready" : ""}
                   </p>
                 )}
+                {msg.role === "assistant" && msg.questionLogId && (
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                    <button
+                      type="button"
+                      disabled={feedbackMutation.isPending}
+                      onClick={() => {
+                        feedbackMutation.mutate({
+                          questionLogId: msg.questionLogId!,
+                          useful: true,
+                          citationAccurate: true,
+                        });
+                      }}
+                      className="rounded-md border border-zinc-300 px-2 py-1 text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    >
+                      Useful
+                    </button>
+                    <button
+                      type="button"
+                      disabled={feedbackMutation.isPending}
+                      onClick={() => {
+                        feedbackMutation.mutate({
+                          questionLogId: msg.questionLogId!,
+                          useful: false,
+                          citationAccurate: false,
+                        });
+                      }}
+                      className="rounded-md border border-zinc-300 px-2 py-1 text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                    >
+                      Not useful
+                    </button>
+                    {feedbackMessageId === msg.questionLogId && !feedbackMutation.isPending && (
+                      <span className="self-center text-zinc-400">Saved</span>
+                    )}
+                  </div>
+                )}
               </li>
             ))}
             {mutation.isPending && (
@@ -108,7 +175,15 @@ export function ChatPanel({
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={ready ? "Ask a question about the source..." : "Waiting for indexing..."}
+            placeholder={
+              ready
+                ? document
+                  ? "Ask a question about the source..."
+                  : "Ask a question about this knowledge base..."
+                : document
+                  ? "Waiting for indexing..."
+                  : "Select a knowledge base..."
+            }
             disabled={!ready || mutation.isPending}
             className="flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 disabled:bg-zinc-50 disabled:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:disabled:bg-zinc-900/50"
           />

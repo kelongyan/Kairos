@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.schemas.document import DocumentListResponse, DocumentResponse
-from app.services import document_service
+from app.services import document_service, knowledge_base_service
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -18,7 +18,8 @@ router = APIRouter(prefix="/documents", tags=["documents"])
     status_code=status.HTTP_201_CREATED,
 )
 async def upload_document(
-    file: UploadFile,
+    file: UploadFile = File(...),
+    knowledge_base_id: str | None = Form(default=None),
     db: Session = Depends(get_db),
 ) -> DocumentResponse:
     """Upload a PDF and enqueue async parsing/indexing.
@@ -31,14 +32,37 @@ async def upload_document(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only PDF files are supported.",
         )
-    document = document_service.upload_pdf(db, file)
+    if knowledge_base_id:
+        kb = knowledge_base_service.get_knowledge_base(db, knowledge_base_id)
+        if kb is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Knowledge base not found: {knowledge_base_id}",
+            )
+    document = document_service.upload_pdf(
+        db,
+        file,
+        knowledge_base_id=knowledge_base_id,
+    )
     return DocumentResponse.model_validate(document)
 
 
 @router.get("", response_model=DocumentListResponse)
-async def list_documents(db: Session = Depends(get_db)) -> DocumentListResponse:
-    """List all documents, newest first."""
-    docs = document_service.list_documents(db)
+async def list_documents(
+    knowledge_base_id: str | None = None,
+    db: Session = Depends(get_db),
+) -> DocumentListResponse:
+    """List documents, optionally filtered by knowledge base."""
+    if knowledge_base_id:
+        kb = knowledge_base_service.get_knowledge_base(db, knowledge_base_id)
+        if kb is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Knowledge base not found: {knowledge_base_id}",
+            )
+        docs = document_service.list_documents_by_knowledge_base(db, knowledge_base_id)
+    else:
+        docs = document_service.list_documents(db)
     return DocumentListResponse(
         documents=[DocumentResponse.model_validate(d) for d in docs]
     )

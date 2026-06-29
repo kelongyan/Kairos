@@ -100,6 +100,15 @@ def test_upload_creates_document_and_enqueues(monkeypatch, tmp_path) -> None:
     fake_queue = FakeQueue()
     monkeypatch.setattr(document_service, "get_queue", lambda: fake_queue)
 
+    class FakeKnowledgeBase:
+        knowledge_base_id = "kb-default"
+
+    monkeypatch.setattr(
+        document_service.knowledge_base_repo,
+        "get_or_create_default_knowledge_base",
+        lambda db: FakeKnowledgeBase(),
+    )
+
     try:
         response = client.post(
             "/documents/upload",
@@ -114,5 +123,57 @@ def test_upload_creates_document_and_enqueues(monkeypatch, tmp_path) -> None:
     assert body["title"] == "paper"
     assert body["source"] == "pdf"
     assert body["doc_id"]
+    assert body["knowledge_base_id"] == "kb-default"
     assert len(fake_db.added) == 1
+    assert len(fake_queue.enqueued) == 1
+
+
+def test_upload_uses_supplied_knowledge_base(monkeypatch, tmp_path) -> None:
+    from app.core import config as config_module
+    from app.services import document_service
+
+    settings = config_module.get_settings()
+    monkeypatch.setattr(settings, "storage_dir", str(tmp_path))
+
+    fake_db = _FakeDB()
+
+    def _fake_get_db():
+        yield fake_db
+
+    app.dependency_overrides[get_db] = _fake_get_db
+
+    class FakeQueue:
+        def __init__(self) -> None:
+            self.enqueued: list = []
+
+        def enqueue(self, *args, **kwargs):
+            self.enqueued.append(args)
+            return None
+
+    fake_queue = FakeQueue()
+    monkeypatch.setattr(document_service, "get_queue", lambda: fake_queue)
+
+    class FakeKnowledgeBase:
+        knowledge_base_id = "kb-123"
+
+    monkeypatch.setattr(
+        document_service.knowledge_base_repo,
+        "get_knowledge_base",
+        lambda db, knowledge_base_id: FakeKnowledgeBase()
+        if knowledge_base_id == "kb-123"
+        else None,
+    )
+
+    try:
+        response = client.post(
+            "/documents/upload",
+            data={"knowledge_base_id": "kb-123"},
+            files={"file": ("paper.pdf", BytesIO(_fake_pdf_bytes()), "application/pdf")},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["knowledge_base_id"] == "kb-123"
     assert len(fake_queue.enqueued) == 1

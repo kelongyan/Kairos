@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.redis import get_queue
 from app.models import Document
-from app.repositories import document_repo
+from app.repositories import document_repo, knowledge_base_repo
 
 settings = get_settings()
 
@@ -27,7 +27,12 @@ def _storage_path() -> Path:
     return path
 
 
-def upload_pdf(db: Session, file: UploadFile) -> Document:
+def upload_pdf(
+    db: Session,
+    file: UploadFile,
+    *,
+    knowledge_base_id: str | None = None,
+) -> Document:
     """Save an uploaded PDF and enqueue async processing.
 
     Args:
@@ -37,6 +42,14 @@ def upload_pdf(db: Session, file: UploadFile) -> Document:
     Returns:
         The created :class:`Document` (status ``uploaded``).
     """
+    knowledge_base = (
+        knowledge_base_repo.get_knowledge_base(db, knowledge_base_id)
+        if knowledge_base_id
+        else knowledge_base_repo.get_or_create_default_knowledge_base(db)
+    )
+    if knowledge_base is None:
+        raise ValueError("knowledge base not found")
+
     storage = _storage_path()
     doc_id = str(uuid.uuid4())
     # Keep the original filename for display; prefix with doc_id for uniqueness.
@@ -48,6 +61,7 @@ def upload_pdf(db: Session, file: UploadFile) -> Document:
         f.write(file.file.read())
 
     title = Path(safe_name).stem
+
     # Store a POSIX-style relative path so both the Windows API server and the
     # Linux RQ worker can resolve it against the backend root. Absolute paths
     # with OS-specific separators break when API and worker run on different
@@ -55,6 +69,7 @@ def upload_pdf(db: Session, file: UploadFile) -> Document:
     relative_path = f"{settings.storage_dir}/{file_name}"
     document = Document(
         doc_id=doc_id,
+        knowledge_base_id=knowledge_base.knowledge_base_id,
         title=title,
         source="pdf",
         file_path=relative_path,
@@ -75,6 +90,13 @@ def get_document(db: Session, doc_id: str) -> Document | None:
 
 def list_documents(db: Session) -> list[Document]:
     return document_repo.list_documents(db)
+
+
+def list_documents_by_knowledge_base(
+    db: Session,
+    knowledge_base_id: str,
+) -> list[Document]:
+    return document_repo.list_documents_by_knowledge_base(db, knowledge_base_id)
 
 
 def reindex_document(db: Session, doc_id: str) -> Document | None:

@@ -46,11 +46,21 @@ def retrieve_sparse(
     db: Session,
     query: str,
     *,
-    doc_id: str,
+    doc_id: str | None = None,
+    knowledge_base_id: str | None = None,
     top_k: int,
 ) -> list[RetrievedChunk]:
-    """Retrieve chunks by BM25 within a single document."""
-    chunks = document_repo.list_chunks(db, doc_id)
+    """Retrieve chunks by BM25 within a document or knowledge base scope."""
+    if doc_id:
+        chunks = document_repo.list_chunks(db, doc_id)
+    elif knowledge_base_id:
+        docs = document_repo.list_documents_by_knowledge_base(db, knowledge_base_id)
+        chunks = document_repo.list_chunks_by_doc_ids(
+            db,
+            [doc.doc_id for doc in docs],
+        )
+    else:
+        chunks = []
     if not chunks:
         return []
 
@@ -62,7 +72,7 @@ def retrieve_sparse(
     bm25 = BM25Okapi(tokenized_corpus)
     scores = bm25.get_scores(query_terms)
 
-    matching: list[tuple[float, object]] = []
+    matching: list[tuple[float, RetrievedChunk]] = []
     for score, chunk, terms in zip(scores, chunks, tokenized_corpus, strict=True):
         if not set(query_terms).isdisjoint(terms):
             matching.append((float(score), chunk))
