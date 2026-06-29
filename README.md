@@ -37,6 +37,7 @@ Read the documents in this order:
 | 3 | [doc/02-development-roadmap.md](doc/02-development-roadmap.md) | Phased development plan and acceptance criteria |
 | 4 | [doc/03-technology-stack.md](doc/03-technology-stack.md) | Technology choices, alternatives, adoption phases |
 | 5 | [doc/04-development-progress.md](doc/04-development-progress.md) | Phase status and progress log |
+| 6 | [doc/05-environment-setup.md](doc/05-environment-setup.md) | Dev environment setup (uv, pnpm, Docker in WSL) |
 
 ---
 
