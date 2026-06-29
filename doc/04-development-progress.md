@@ -87,7 +87,7 @@ Known issues / notes:
 Commit:
 
 ```text
-(filled in after commit)
+a2d0b5e feat: implement Phase 1 single-paper RAG MVP
 ```
 
 GitHub branch:
