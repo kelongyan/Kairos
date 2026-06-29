@@ -1,4 +1,4 @@
-# ScholarPilot — Ollama WSL 防火墙规则
+# Kairos — Ollama WSL 防火墙规则
 #
 # 用途：允许 WSL 子网访问 Windows 上 Ollama 的 11434 端口。
 # 必须以管理员身份运行。

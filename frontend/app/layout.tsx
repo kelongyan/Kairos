@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ScholarPilot",
+  title: "Kairos",
   description:
-    "AI Research Copilot for paper reading, evidence-first retrieval, and citation-grounded question answering.",
+    "Verifiable team knowledge-base Q&A and knowledge operations platform.",
 };
 
 export default function RootLayout({

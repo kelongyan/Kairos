@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.schemas.rag import RetrievalTraceResponse
 from app.services.citation_service import build_citations
 from app.services.vector_service import RetrievedChunk
 
@@ -58,3 +59,9 @@ def test_build_citations_truncates_long_quotes() -> None:
 def test_build_citations_empty_input() -> None:
     """No retrieved chunks yields no citations."""
     assert build_citations([]) == []
+
+
+def test_retrieval_trace_defaults_are_serializable() -> None:
+    trace = RetrievalTraceResponse(query="q", rewritten_query="q")
+    assert trace.dense_results == []
+    assert trace.evidence_pack == []

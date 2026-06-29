@@ -21,6 +21,6 @@ def test_root_returns_service_info() -> None:
     response = client.get("/")
     assert response.status_code == 200
     body = response.json()
-    assert body["service"] == "ScholarPilot"
+    assert body["service"] == "Kairos"
     assert "version" in body
     assert body["docs"] == "/docs"

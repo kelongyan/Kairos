@@ -34,6 +34,7 @@ secrets.json
 # ===== IDE / editor =====
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 
@@ -50,9 +51,8 @@ pnpm-debug.log*
 # ===== Misc =====
 .vercel
 
-# ===== ScholarPilot runtime data =====
+# ===== Kairos runtime data =====
 # Uploaded PDFs and parsed artifacts (created at runtime by the backend).
 backend/storage/
 # Test PDFs generated during local testing.
 backend/test_paper.pdf
-

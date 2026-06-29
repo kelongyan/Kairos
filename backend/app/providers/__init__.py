@@ -11,6 +11,7 @@ from __future__ import annotations
 from app.providers.base import EmbeddingProvider, LLMProvider, RerankerProvider
 from app.providers.embedding.factory import get_embedding_provider
 from app.providers.llm.factory import get_llm_provider
+from app.providers.reranker.factory import get_reranker_provider
 
 __all__ = [
     "EmbeddingProvider",
@@ -18,4 +19,5 @@ __all__ = [
     "RerankerProvider",
     "get_embedding_provider",
     "get_llm_provider",
+    "get_reranker_provider",
 ]

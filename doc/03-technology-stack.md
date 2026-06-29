@@ -1,458 +1,240 @@
-# ScholarPilot Technology Stack
+# Kairos Technology Stack
 
 ---
 
-## 1. 技术选型结论
+## 1. 技术栈结论
 
-ScholarPilot 优先建设为 **浏览器访问的 Web Research Workspace**，采用前后端分离架构：
+Kairos 新定位为可验证的团队知识库问答与知识运营平台，但现有技术栈仍然适用。当前不需要推翻重来，应在现有 Web 架构和 RAG 引擎上扩展知识库、反馈、知识运营、权限、trace、评测和后期 Agent 能力。
+
+标准架构：
 
 ```text
 Next.js Web UI
   -> FastAPI Backend
   -> PostgreSQL / Qdrant / Redis
-  -> RAG Pipeline / Agent Workflow
+  -> Document Pipeline / Hybrid RAG / Feedback / Trace
+  -> Knowledge Operations
+  -> Controlled Multi-Agent Workflow (later)
   -> LLM / Embedding / Reranker Providers
-```
-
-第一版标准技术栈：
-
-```text
-Frontend:
-Next.js + React + TypeScript + pnpm + Tailwind CSS + shadcn/ui + TanStack Query + PDF.js
-
-Backend:
-Python 3.12 + FastAPI + Pydantic v2 + SQLAlchemy 2.0 + Alembic + uv + Ruff + Pytest
-
-Storage:
-PostgreSQL + Qdrant + Redis + local filesystem
-
-Async:
-RQ + Redis
-
-RAG:
-Custom RAG Pipeline + Qdrant Hybrid Search + BM25 + Reranker
-
-Agent:
-LangGraph
-
-Parsing:
-PyMuPDF + pdfplumber first
-GROBID / Docling later
-
-Models:
-Provider abstraction
-Qwen / DeepSeek / OpenAI
-BGE-M3 / Qwen3 Embedding
-BGE Reranker / Qwen3 Reranker
-
-Ops:
-Docker Compose later
-Langfuse / Phoenix later
 ```
 
 核心判断：
 
-- 先做 Web 服务，不先做桌面软件。
-- 先做稳定 RAG 闭环，不先做复杂 Agent。
-- 先做轻量可控技术栈，不一开始引入重型分布式组件。
-- 模型、向量库、解析器必须通过接口隔离，方便后续替换。
+- 继续优先 Web App，不做桌面客户端。
+- 继续保留 FastAPI + Next.js + PostgreSQL + Qdrant + Redis。
+- 继续自研核心 RAG pipeline，避免核心链路被重型框架遮蔽。
+- 产品落点优先是知识库问答、用户反馈和知识运营闭环。
+- Agent 后置到知识库、权限、反馈和 trace 基础稳定之后。
+- 后续工具采用分层策略：短期不堆工具，中期补评测和观测，长期按瓶颈升级检索、解析和权限系统。
 
 ---
 
-## 2. 产品形态选择
+## 2. 前端技术栈
 
-### 2.1 推荐形态
-
-推荐做成：
-
-```text
-浏览器 Web App + 后端服务
-```
-
-也就是：
-
-- 用户通过浏览器访问 ScholarPilot。
-- 前端负责文档库、阅读器、Chat、引用面板、任务状态。
-- 后端负责文档解析、检索、embedding、LLM 调用、Agent 工作流。
-- 数据库、向量库、缓存和文件存储由后端统一管理。
-
-### 2.2 不优先做桌面软件
-
-桌面软件会过早引入以下复杂度：
-
-- 安装包构建。
-- 自动更新。
-- 跨平台兼容。
-- 本地 Python 环境管理。
-- 本地数据库和向量库管理。
-- 模型依赖和 GPU 环境差异。
-
-这些问题会拖慢 Phase 0 和 Phase 1。当前阶段最重要的是跑通：
-
-```text
-上传 PDF -> 解析 -> chunk -> embedding -> 检索 -> 问答 -> 引用返回
-```
-
-### 2.3 后续桌面封装
-
-如果后续需要桌面形态，可以采用：
-
-```text
-Electron / Tauri
-  -> 内嵌 Web UI
-  -> 调用本地 FastAPI 服务
-```
-
-桌面客户端只作为外壳，不改变核心架构。
-
----
-
-## 3. 前端技术栈
-
-### 3.1 推荐方案
-
-```text
-Next.js + React + TypeScript + Tailwind CSS + shadcn/ui + TanStack Query + PDF.js
-```
-
-### 3.2 选型理由
-
-| 技术 | 用途 | 理由 |
+| 技术 | 用途 | 当前策略 |
 |---|---|---|
-| Next.js | Web 应用框架 | 适合复杂 Web App，生态成熟，后续部署方便 |
-| React | UI 基础 | 适合 Chat、PDF 阅读器、引用面板等复杂交互 |
-| TypeScript | 类型约束 | 降低前后端接口变更风险 |
-| pnpm | 前端包管理 | 依赖安装快，磁盘占用低，lockfile 更适合保持环境一致 |
-| Tailwind CSS | 样式系统 | 快速构建统一、可维护的界面 |
-| shadcn/ui | UI 组件 | 适合构建专业工作台界面，可控性强 |
-| TanStack Query | 服务端状态 | 适合文档列表、任务状态、检索结果和 Chat 历史 |
-| PDF.js / react-pdf | PDF 阅读 | 支持页码定位、引用跳转和论文阅读器 |
+| Next.js | Web 应用框架 | 保留 |
+| React | 复杂交互 UI | 保留 |
+| TypeScript | 前后端契约和类型安全 | 保留 |
+| Tailwind CSS | 工作台样式系统 | 保留 |
+| TanStack Query | 服务端状态、轮询、缓存 | 已使用，继续扩大 |
+| shadcn/ui | 标准组件库 | 可逐步引入，不强制一次迁移 |
+| PDF.js / react-pdf | PDF 阅读器和引用跳转 | Phase 3/4 引入 |
+| ECharts / Recharts | 统计看板 | Phase 6 再引入 |
 
-### 3.3 前端不推荐项
-
-| 技术 | 暂不推荐原因 |
-|---|---|
-| 纯 Vite SPA | 可以用，但后续路由、部署、服务边界不如 Next.js 统一 |
-| Electron | 当前阶段会增加桌面端构建和环境管理成本 |
-| 复杂动画库 | 当前重点是阅读、检索和引用，不是视觉动效 |
-| 大型状态管理库 | 早期 Zustand/TanStack Query 足够，不需要 Redux 级复杂度 |
-
-### 3.4 前端结构建议
+前端结构建议：
 
 ```text
 frontend/
 ├─ app/
 ├─ components/
+│  ├─ knowledge-base/
 │  ├─ document/
 │  ├─ chat/
 │  ├─ citation/
-│  └─ layout/
+│  ├─ feedback/
+│  ├─ trace/
+│  └─ dashboard/
 ├─ lib/
 │  ├─ api-client.ts
-│  ├─ query-client.ts
 │  └─ types.ts
-├─ package.json
-└─ pnpm-lock.yaml
+└─ package.json
 ```
+
+当前前端已有三栏工作区。下一阶段应增加知识库切换和知识库文档分组，而不是重做 UI。
 
 ---
 
-## 4. 后端技术栈
+## 3. 后端技术栈
 
-### 4.1 推荐方案
-
-```text
-Python 3.12 + FastAPI + Pydantic v2 + SQLAlchemy 2.0 + Alembic + uv + Ruff + Pytest
-```
-
-### 4.2 选型理由
-
-| 技术 | 用途 | 理由 |
+| 技术 | 用途 | 当前策略 |
 |---|---|---|
-| Python 3.12 | 后端语言 | AI、RAG、PDF 解析生态最完整 |
-| FastAPI | API 服务 | 类型友好，异步支持好，适合 AI 服务接口 |
-| Pydantic v2 | 数据校验 | 请求、响应和配置结构清晰 |
-| SQLAlchemy 2.0 | ORM | 适合 PostgreSQL 数据访问和复杂查询 |
-| Alembic | 数据库迁移 | 保证模型变化可追踪 |
-| uv | Python 依赖管理 | 快速、现代、适合锁定依赖 |
-| Ruff | lint / format | 速度快，统一代码风格 |
-| Pytest | 测试 | Python 主流测试工具 |
+| Python 3.12 | AI/RAG 后端语言 | 保留 |
+| FastAPI | API 服务 | 保留 |
+| Pydantic v2 | 请求、响应、配置 schema | 保留 |
+| SQLAlchemy 2.0 | PostgreSQL ORM | 保留 |
+| Alembic | 数据库迁移 | 保留 |
+| uv | Python 依赖管理 | 保留 |
+| Ruff | lint/format | 保留 |
+| Pytest | 测试 | 保留 |
 
-### 4.3 后端结构建议
+后端结构继续采用：
 
 ```text
-backend/
-├─ app/
-│  ├─ api/
-│  ├─ core/
-│  ├─ models/
-│  ├─ schemas/
-│  ├─ services/
-│  ├─ repositories/
-│  ├─ providers/
-│  └─ main.py
-├─ tests/
-├─ pyproject.toml
-└─ uv.lock
+backend/app/
+├─ api/
+├─ core/
+├─ models/
+├─ schemas/
+├─ services/
+├─ repositories/
+├─ providers/
+└─ workers/
 ```
 
-### 4.4 分层职责
+新增模块建议：
 
-| 层 | 职责 |
-|---|---|
-| api | HTTP 路由、请求参数、响应格式 |
-| schemas | Pydantic DTO、输入输出结构 |
-| services | 业务流程编排 |
-| repositories | 数据访问 |
-| models | 数据库模型 |
-| providers | 外部模型、向量库、解析器、论文搜索服务适配 |
-| core | 配置、日志、异常、基础设施 |
-
-### 4.5 后端不推荐项
-
-| 技术或做法 | 暂不推荐原因 |
-|---|---|
-| Django | 管理后台强，但当前 AI/RAG 服务更适合 FastAPI |
-| Flask | 简洁，但类型、异步和 schema 体系不如 FastAPI 直接 |
-| API 层写业务逻辑 | 会导致耦合严重，后续难测试 |
-| 业务代码直接调用模型厂商 SDK | 会锁死 provider，不利于切换模型 |
+```text
+models/knowledge_base.py
+repositories/knowledge_base_repo.py
+api/knowledge_bases.py
+services/trace_service.py
+services/feedback_service.py
+services/knowledge_ops_service.py
+services/eval_service.py
+services/agent_service.py
+```
 
 ---
 
-## 5. 数据库、向量库与缓存
+## 4. 存储与基础设施
 
-### 5.1 推荐方案
-
-```text
-PostgreSQL + Qdrant + Redis + local filesystem
-```
-
-### 5.2 PostgreSQL
-
-用于存储：
-
-- project
-- document
-- chunk metadata
-- citation
-- task
-- evaluation run
-- user feedback
-
-不建议把所有结构化数据塞进向量库。向量库负责相似度检索，PostgreSQL 负责业务元数据和事务一致性。
-
-### 5.3 Qdrant
-
-推荐 Qdrant 作为第一版服务化向量库。
-
-理由：
-
-- 部署轻。
-- API 友好。
-- 支持 payload metadata。
-- 适合从 MVP 过渡到中等规模服务。
-- 适合 dense / sparse / hybrid 检索路线。
-
-### 5.4 FAISS
-
-FAISS 适合：
-
-- 本地实验。
-- 快速验证 embedding 效果。
-- 单机小规模索引。
-
-但不建议作为 Web 服务主向量库，因为服务化管理、metadata 过滤、持久化和运维便利性不如 Qdrant。
-
-### 5.5 Milvus
-
-Milvus 适合：
-
-- 大规模向量数据。
-- 更重的服务化部署。
-- 多节点扩展。
-
-当前阶段不优先引入。等数据规模和并发需求明显上来后再评估。
-
-### 5.6 Redis
-
-用于：
-
-- 异步任务队列。
-- 任务状态缓存。
-- query rewrite 缓存。
-- embedding 缓存。
-- 检索结果短期缓存。
-- API 限流。
-
----
-
-## 6. 异步任务
-
-### 6.1 推荐方案
-
-```text
-Phase 1: RQ + Redis
-Phase 2-3: RQ 或 Celery
-Phase 4+: 如长工作流复杂，再评估 Temporal
-```
-
-### 6.2 选型理由
-
-| 技术 | 适用场景 | 当前判断 |
+| 组件 | 用途 | 当前策略 |
 |---|---|---|
-| RQ | 简单后台任务 | Phase 1 推荐 |
-| Celery | 更复杂的分布式任务 | Phase 2/3 再评估 |
-| Dramatiq | 中等复杂度任务 | 可作为 Celery 替代 |
-| Temporal | 长生命周期可靠工作流 | 后期再看 |
+| PostgreSQL | 用户、知识库、文档、chunk、trace、评测、审计 | 主业务数据库 |
+| Qdrant | 向量索引和 metadata filter | 继续使用 |
+| Redis | RQ 队列、任务状态、缓存 | 继续使用 |
+| Local filesystem | 原始文档保存 | 当前保留 |
+| MinIO / S3 | 对象存储 | 生产化阶段再评估 |
 
-### 6.3 任务类型
+PostgreSQL 数据模型应逐步补齐：
 
-异步任务包括：
+- `knowledge_bases`
+- `users`
+- `roles`
+- `audit_logs`
+- `chat_sessions`
+- `chat_messages`
+- `feedback_events`
+- `knowledge_gaps`
+- `knowledge_ops_items`
+- `retrieval_traces`
+- `eval_datasets`
+- `eval_runs`
 
-- PDF 解析。
+第一步只新增知识库相关表，避免一次性迁移过大。
+
+### 4.1 暂不替换的组件
+
+| 组件 | 暂不替换原因 | 后续替代候选 |
+|---|---|---|
+| PostgreSQL | 当前业务数据规模和事务需求适配良好 | 不建议替换 |
+| Qdrant | 已接入，适合当前向量检索和 metadata filter | Milvus、Elasticsearch/OpenSearch |
+| Redis/RQ | 已满足文档处理异步任务 | Celery、Dramatiq、Temporal |
+| Local filesystem | 开发期简单可靠 | MinIO、S3 |
+
+只有出现明确瓶颈时才升级，不能因为工具流行而替换。
+
+---
+
+## 5. 异步任务
+
+当前使用 RQ + Redis，适合现阶段：
+
+- 文档解析。
 - chunk 切分。
 - embedding 生成。
 - 向量索引。
-- 批量论文导入。
-- 多论文对比。
-- related work 生成。
-- 趋势报告生成。
+- 文档重新索引。
+
+暂不切换 Celery。只有当出现复杂定时任务、任务编排、失败恢复和分布式 worker 需求时，再评估 Celery、Dramatiq 或 Temporal。
+
+---
+
+## 6. 文档解析
+
+当前已实现：
+
+- PDF：PyMuPDF。
+- chunk：token 近似切分，保留页码。
+
+下一步扩展建议：
+
+| 格式 | 建议工具 | 阶段 |
+|---|---|---|
+| PDF | PyMuPDF + pdfplumber | 已有，继续增强 |
+| DOCX / PPTX / HTML | MarkItDown | 中期可接入，用于快速转 Markdown |
+| Markdown / TXT | 原生读取或 markdown-it-py | 中期可接入 |
+| HTML 正文抽取 | BeautifulSoup / trafilatura | 中期可接入 |
+| 结构化多格式解析 | Unstructured | 中期评估 |
+| 复杂 PDF 表格/版面/OCR | Docling | 后期升级 |
+| 超广格式解析 | Apache Tika | 后期评估 |
+
+短期不强依赖 Docling。先保证普通文档可稳定入库、chunk 和检索。
+
+工具取舍：
+
+- MarkItDown：适合快速把 Office、HTML 等资料转成 Markdown，作为多格式接入的轻量优先方案。
+- Unstructured：适合需要文档元素类型、标题、表格、正文块等结构化信息的场景。
+- Docling：适合复杂 PDF、表格、版面、公式和 OCR，但引入后解析链路更重，应后置。
+- Tika：格式覆盖广，但 Java 服务化和部署成本更高，暂不优先。
 
 ---
 
 ## 7. RAG 技术栈
 
-### 7.1 推荐方案
+当前核心链路：
 
 ```text
-Custom RAG Pipeline + Qdrant Hybrid Search + BM25 + Reranker
-```
-
-### 7.2 为什么自研核心 Pipeline
-
-ScholarPilot 的核心竞争力是：
-
-- Evidence Pack。
-- citation grounding。
-- 检索 trace。
-- 引用准确性检查。
-- RAG 评测闭环。
-
-这些能力需要较强控制力。如果一开始完全依赖重型框架，核心链路容易被框架抽象遮住，不利于调试和评测。
-
-### 7.3 推荐 RAG 流程
-
-```text
-question
-  -> query classification
-  -> query rewrite / decomposition
+query rewrite
   -> dense retrieval
-  -> sparse retrieval
+  -> BM25 sparse retrieval
   -> RRF fusion
   -> rerank
-  -> evidence pack
-  -> answer generation
-  -> citation verification
-  -> answer with sources
+  -> Evidence Pack
+  -> answer + citations + trace
 ```
 
-### 7.4 可参考框架
+保留策略：
 
-| 框架 | 用途 | 当前策略 |
+- dense retrieval 使用 Qdrant。
+- sparse retrieval 当前使用 `rank-bm25`。
+- fusion 使用 RRF。
+- reranker 通过 provider abstraction。
+- LLM 只能基于 Evidence Pack 回答。
+
+扩展方向：
+
+- Phase 3：支持 `knowledge_base_id` 多文档检索。
+- Phase 4：trace 持久化和评测 API。
+- Phase 5：Agent 多轮检索和 reviewer。
+- Phase 6：如规模上升，再评估 Qdrant sparse vector、OpenSearch、Elasticsearch 或 Milvus。
+
+检索工具取舍：
+
+| 技术 | 当前策略 | 引入条件 |
 |---|---|---|
-| LangChain | 工具生态丰富 | 不作为核心依赖，按需参考 |
-| LlamaIndex | 数据接入和索引生态强 | 可参考，不锁死 |
-| Haystack | RAG pipeline 成熟 | 可参考 pipeline 思路 |
-| RAGAS | RAG 评测 | 推荐接入或参考指标 |
+| rank-bm25 | 短期继续使用 | 当前规模足够，便于测试 |
+| Qdrant sparse vector / native hybrid | 中期评估 | BM25 计算成为性能瓶颈 |
+| Elasticsearch / OpenSearch | 后期评估 | 需要强全文检索、复杂过滤、排序解释 |
+| Milvus | 后期评估 | Qdrant 容量或并发不足 |
+| pgvector | 暂不引入 | 当前已有 Qdrant，避免重复向量存储 |
 
 ---
 
-## 8. Agent 技术栈
+## 8. 模型 Provider
 
-### 8.1 推荐方案
-
-```text
-LangGraph
-```
-
-### 8.2 选型理由
-
-LangGraph 适合状态机式、可控 Agent 工作流。ScholarPilot 需要的是科研任务编排，不是自由聊天机器人。
-
-适合 LangGraph 的任务：
-
-- 单篇论文总结。
-- 多论文对比。
-- Related Work 草稿。
-- 趋势报告。
-- 多步检索。
-- 人工确认节点。
-- 失败恢复。
-
-### 8.3 Agent 设计边界
-
-```text
-Planner Agent
-  -> Retriever Agent
-  -> Evidence Synthesizer
-  -> Reviewer Agent
-```
-
-每个 Agent 必须：
-
-- 输入明确。
-- 输出明确。
-- 工具权限明确。
-- 最大迭代次数明确。
-- trace 可记录。
-
----
-
-## 9. 文档解析技术栈
-
-### 9.1 推荐路线
-
-```text
-Phase 1:
-PyMuPDF + pdfplumber
-
-Phase 2:
-GROBID
-
-Phase 3/4:
-Docling
-```
-
-### 9.2 工具职责
-
-| 工具 | 职责 |
-|---|---|
-| PyMuPDF | 快速提取 PDF 文本、页码、基础结构 |
-| pdfplumber | 表格和局部版面辅助解析 |
-| GROBID | 学术论文标题、作者、摘要、参考文献等结构化元数据 |
-| Docling | 复杂版面、表格、公式、图注、多格式文档解析 |
-| BeautifulSoup / trafilatura | Web 页面正文抽取 |
-
-### 9.3 不一开始强依赖 Docling 的原因
-
-Docling 能力更强，但第一阶段目标是稳定跑通 RAG 闭环。过早把复杂解析作为硬依赖，会增加调试范围。
-
-第一阶段只要求：
-
-- 常规论文 PDF 可解析。
-- 页码能保留。
-- chunk 能回到来源。
-- 文本质量足以支持问答。
-
----
-
-## 10. 模型技术栈
-
-### 10.1 核心原则
-
-模型必须通过 provider abstraction 接入。业务代码不能直接绑定某个厂商或某个模型。
-
-建议抽象：
+继续保持 provider abstraction：
 
 ```text
 LLMProvider
@@ -460,276 +242,163 @@ EmbeddingProvider
 RerankerProvider
 ```
 
-### 10.2 LLM
+当前支持方向：
 
-推荐支持：
+- LLM：OpenAI-compatible、Anthropic、local。
+- Embedding：OpenAI-compatible、local sentence-transformers。
+- Reranker：simple deterministic fallback。
 
-- Qwen
-- DeepSeek
-- OpenAI
-- Llama / local model
+后续建议：
 
-策略：
+- 增加真实 cross-encoder reranker provider。
+- 增加模型调用耗时和 token 成本记录。
+- 不在业务层直接调用模型 SDK。
 
-- 默认选一个稳定 LLM 跑通 MVP。
-- 复杂任务使用能力更强的模型。
-- 简单任务使用成本更低的模型。
-- 模型切换不影响业务层代码。
+### 8.1 Reranker 升级路线
 
-### 10.3 Embedding
+| 方案 | 用途 | 策略 |
+|---|---|---|
+| simple fallback | 测试和无模型环境 | 保留 |
+| BGE reranker | 本地或自托管重排 | 优先评估 |
+| Jina reranker | 多语种重排 | 可选评估 |
+| Cohere Rerank | 云端高质量 rerank | 成本可接受时评估 |
+| Voyage reranker | 云端 rerank | 可选评估 |
 
-推荐：
+### 8.2 模型网关
 
-- BGE-M3
-- Qwen3 Embedding
-- E5
-- OpenAI text embeddings 作为云端备选
+暂不引入 LiteLLM Proxy。当前 provider abstraction 已能覆盖 OpenAI-compatible、Anthropic 和 local provider。
 
-选择依据：
+当出现以下情况时再评估 LiteLLM：
 
-- 中英文混合能力。
-- 学术文本表现。
-- 向量维度和成本。
-- 本地部署便利性。
-
-### 10.4 Reranker
-
-推荐：
-
-- BGE Reranker
-- Qwen3 Reranker
-
-Reranker 放在二阶段排序中，用于提升最终 Evidence Pack 质量。
+- 同时接入多个模型供应商。
+- 需要统一预算、限流和 fallback。
+- 需要集中记录模型调用成本。
+- 需要为多租户隔离模型 key。
 
 ---
 
-## 11. 评测与可观测
+## 9. 权限与安全
 
-### 11.1 RAG 评测
+Phase 4 开始实现：
 
-推荐：
+- JWT 登录。
+- RBAC：系统管理员、知识库管理员、普通用户。
+- 知识库级访问控制。
+- 审计日志。
+
+安全原则：
+
+- `.env`、密钥、token 不进入 Git。
+- 上传文档、网页内容、外部搜索结果均视为不可信内容。
+- 检索内容不能触发工具调用。
+- Agent 工具权限由后端策略控制。
+- 高风险操作需要确认。
+
+具体 auth 库暂不锁定，可先自研最小 JWT + password hashing；复杂用户管理再评估 FastAPI Users 等方案。
+
+权限工具取舍：
+
+| 工具 | 策略 | 引入条件 |
+|---|---|---|
+| 自研最小 JWT + RBAC | Phase 4 优先 | 管理员、知识库管理员、普通用户足够 |
+| FastAPI Users | 可评估 | 用户注册、邮箱验证、密码重置需求增强 |
+| Casbin | 后期评估 | RBAC/ABAC 规则复杂化 |
+| OpenFGA | 后期评估 | 团队、共享、继承、关系型权限复杂化 |
+
+---
+
+## 10. Trace、评测与看板
+
+短期自建 trace 数据模型，记录：
+
+- trace id。
+- user id / knowledge base id / session id。
+- query 和 rewritten query。
+- dense/sparse/fused/reranked results。
+- Evidence Pack。
+- final answer 和 citations。
+- latency、model、token/cost。
+
+评测指标：
+
+- Hit Rate。
+- Recall@K。
+- MRR。
+- Citation Accuracy。
+- Faithfulness。
+- Answer Relevance。
+- Latency。
+
+看板工具后置到 Phase 6，可选 ECharts 或 Recharts。
+
+评测与观测工具取舍：
+
+| 工具 | 用途 | 策略 |
+|---|---|---|
+| 自建 trace 表 | 问答与检索链路记录 | Phase 4 优先 |
+| Ragas | RAG 指标评测 | 固定评测集建立后引入 |
+| DeepEval | LLM-as-judge、自定义评测 | 可与 Ragas 二选一或并行试验 |
+| Langfuse | LLM trace、prompt、成本、评测 | 自建 trace 不够用时引入 |
+| Phoenix | OpenTelemetry 友好的 LLM 观测 | 需要标准化 tracing 时评估 |
+| ECharts / Recharts | 前端统计看板 | Phase 6 引入 |
+
+---
+
+## 11. Agent 编排
+
+推荐使用 LangGraph，但只在 Phase 5 引入。
+
+Agent 边界：
 
 ```text
-RAGAS + 自建固定问题集
+Planner -> Retrieval -> Analyst -> Writer -> Reviewer
 ```
 
-关键指标：
+要求：
 
-- Recall@K
-- MRR
-- Context Precision
-- Context Recall
-- Faithfulness
-- Answer Relevance
-- Citation Accuracy
+- 固定工作流优先。
+- 每一步有输入、输出、状态和 trace。
+- 工具权限明确。
+- 最大迭代次数明确。
+- 失败时返回当前已完成结果和失败原因。
 
-### 11.2 Trace
+暂不引入 A2A、MCP 工具市场或完全自主 Agent。
 
-Phase 1 先自建 JSON trace：
+Agent 工具取舍：
 
-```json
-{
-  "query": "...",
-  "rewritten_query": "...",
-  "dense_results": [],
-  "sparse_results": [],
-  "reranked_results": [],
-  "evidence_pack": [],
-  "model": "...",
-  "latency_ms": 1234
-}
-```
+| 技术 | 策略 | 原因 |
+|---|---|---|
+| LangGraph | Phase 5 推荐 | 状态机式工作流，适合受控 Agent |
+| LangChain Agent | 暂不作为主编排 | 容易变成开放式工具调用 |
+| LlamaIndex Agent | 可参考 | 更偏数据接入和 RAG 生态 |
+| Haystack Pipeline | 可参考 | pipeline 思路成熟，但不替换现有核心链路 |
+| MCP | 后期工具标准化 | 当前外部工具数量不足，先不引入 |
+| A2A | 长期跨系统协作 | 当前没有跨 Agent 系统集成需求 |
 
-Phase 3 后再评估：
+LangGraph 引入前置条件：
 
-- Langfuse
-- Phoenix
-- OpenTelemetry
-
-### 11.3 错误监控
-
-Phase 5 可考虑：
-
-- Sentry
-- OpenTelemetry
-- 结构化日志平台
+- 知识库级检索完成。
+- trace 持久化完成。
+- 权限和工具边界明确。
+- Agent 执行失败可以记录并返回。
 
 ---
 
-## 12. 安全技术要求
+## 12. 技术变更规则
 
-### 12.1 文档不可信原则
-
-以下内容全部视为不可信输入：
-
-- 上传 PDF。
-- 网页正文。
-- README。
-- 外部论文摘要。
-- 用户粘贴内容。
-
-### 12.2 Prompt Injection 防护
-
-必须做到：
-
-- 检索内容只能作为 evidence，不允许覆盖系统指令。
-- 文档中的命令式文本不能直接触发工具调用。
-- Agent 工具权限由后端策略控制。
-- 高风险动作需要人工确认。
-
-### 12.3 密钥管理
-
-- 密钥只能放在环境变量。
-- `.env` 不提交 Git。
-- 提供 `.env.example`。
-- 日志不能打印 API key、token、cookie。
-
----
-
-## 13. 分阶段采用策略
-
-### Phase 0：项目基础
-
-采用：
-
-- Next.js
-- FastAPI
-- Python 3.12
-- pnpm
-- uv
-- Ruff
-- Pytest
-- TypeScript
-- Tailwind CSS
-
-暂不引入：
-
-- LangGraph
-- Qdrant
-- Redis
-- Reranker
-
-### Phase 1：单篇论文 RAG MVP
-
-采用：
-
-- PostgreSQL
-- Qdrant
-- Redis
-- RQ
-- PyMuPDF
-- pdfplumber
-- embedding provider
-- LLM provider
-
-暂不引入：
-
-- GraphRAG
-- 复杂 Agent
-- Docling 作为硬依赖
-- Milvus
-
-### Phase 2：高质量 Hybrid RAG
-
-采用：
-
-- BM25
-- dense retrieval
-- RRF
-- reranker
-- Evidence Pack
-- RAGAS 或自建评测集
-
-### Phase 3：科研任务工作流
-
-采用：
-
-- LangGraph
-- Agent trace
-- 长任务状态管理
-- 多论文任务编排
-
-### Phase 4：趋势追踪与知识增强
-
-采用：
-
-- arXiv / Semantic Scholar / OpenAlex
-- GROBID
-- Docling
-- GraphRAG 原型
-- 聚类分析
-
-### Phase 5：产品化部署
-
-采用：
-
-- Docker Compose
-- 对象存储
-- 日志与监控
-- 限流
-- 备份策略
-- 错误追踪
-
----
-
-## 14. 技术变更规则
-
-### 14.1 允许变更
-
-如果需要替换技术栈，必须满足：
-
-- 有明确原因。
-- 有替代方案分析。
-- 不破坏既有阶段目标。
-- 不引入明显过重复杂度。
-- 更新本文档和 `RULE.md` 中相关约束。
-
-### 14.2 禁止随意引入
-
-以下内容不得随意引入：
-
-- 新数据库。
-- 新向量库。
-- 新 Agent 框架。
-- 新前端 UI 框架。
-- 新模型供应商 SDK。
-- 新任务队列。
-
-引入前必须说明：
+新增关键基础设施前必须说明：
 
 - 解决什么问题。
-- 为什么现有技术不能解决。
-- 对部署、测试和维护的影响。
+- 为什么现有组件不能满足。
+- 对部署、测试、迁移和维护的影响。
 
----
+当前禁止随意替换：
 
-## 15. 当前最终建议
+- FastAPI。
+- Next.js。
+- PostgreSQL。
+- Qdrant。
+- Redis/RQ。
+- provider abstraction。
 
-ScholarPilot 第一阶段不需要追求“技术最满”，而要追求“链路最稳”：
-
-```text
-Next.js UI
-  -> FastAPI API
-  -> PostgreSQL metadata
-  -> Qdrant vectors
-  -> Redis/RQ async jobs
-  -> PyMuPDF/pdfplumber parsing
-  -> embedding
-  -> retrieval
-  -> LLM answer
-  -> citation output
-```
-
-这条链路稳定以后，再逐步加入：
-
-- Hybrid Retrieval
-- Reranker
-- RAGAS
-- LangGraph
-- Docling
-- GraphRAG
-- Docker Compose
-
-最终原则：
-
-> 技术栈服务于 ScholarPilot 的核心目标：可信、可追溯、可评测的科研知识工作台。
+可以局部扩展，但不能破坏现有 RAG 闭环。

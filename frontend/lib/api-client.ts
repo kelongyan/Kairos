@@ -1,5 +1,5 @@
 /**
- * API client for the ScholarPilot backend.
+ * API client for the Kairos backend.
  */
 
 import type {

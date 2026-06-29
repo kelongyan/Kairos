@@ -5,8 +5,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 
 /**
- * PDF upload panel. Uploads a file and triggers async processing on the
- * backend, then invalidates the document list.
+ * PDF upload panel. Uploads a source file and triggers async processing on the
+ * backend, then invalidates the source list.
  */
 export function UploadPanel() {
   const queryClient = useQueryClient();
@@ -38,7 +38,7 @@ export function UploadPanel() {
             : "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
         }`}
       >
-        {mutation.isPending ? "Uploading…" : "Upload PDF"}
+        {mutation.isPending ? "Uploading..." : "Upload PDF"}
         <input
           type="file"
           accept="application/pdf"

@@ -4,16 +4,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository State
 
-This repo is **planning-only**. No application code exists yet — there is no `backend/`, `frontend/`, `package.json`, `pyproject.toml`, or `.gitignore`. All current content is documentation. Phase 0 (project foundation) is `Not Started`.
+This repo contains an active FastAPI backend and Next.js frontend. The current
+implemented foundation includes PDF ingestion, parsing, chunking, embedding,
+Qdrant indexing, Hybrid RAG retrieval, citations, and retrieval trace metadata.
 
-Before writing any code, read the planning docs in this order: `RULE.md` → `doc/01-project-overview.md` → `doc/02-development-roadmap.md` → `doc/03-technology-stack.md` → `doc/04-development-progress.md`. The planning docs are primarily written in Chinese; match the existing language of each file when editing.
+Before writing code, read the planning docs in this order: `RULE.md` ->
+`doc/00-product-requirements.md` -> `doc/01-project-overview.md` ->
+`doc/02-development-roadmap.md` -> `doc/03-technology-stack.md` ->
+`doc/04-development-progress.md`. The planning docs are primarily written in
+Chinese; match the existing language of each file when editing.
 
-## What ScholarPilot Is
+## What Kairos Is
 
-A browser-based AI Research Copilot for paper reading, **evidence-first** retrieval, and citation-grounded question answering. The defining principle: retrieve and organize evidence *before* generating answers, and every conclusion must trace back to a source chunk (doc_id, chunk_id, section, page, original text, retrieval score). When evidence is insufficient, the system must say so explicitly — it must never fabricate paper conclusions, metrics, or citations.
+Kairos is a browser-based, verifiable team knowledge-base Q&A and knowledge
+operations platform. The defining principle is evidence-first retrieval:
+retrieve and organize evidence before generating answers, and every important
+answer must trace back to source chunks, citations, and retrieval trace data.
+When evidence is insufficient, the system must say so explicitly rather than
+fabricating conclusions, metrics, or citations.
 
-The first implementation goal is a stable single-paper RAG loop:
-`Upload PDF → Parse → Chunk → Embed → Retrieve → Answer → Return citations`
+The next implementation goal is the knowledge-base product layer:
+`KnowledgeBase -> document ownership -> multi-document retrieval -> knowledge-base-level chat -> feedback and knowledge-gap signals`.
 
 ## Decision Authority & Phase Gating
 

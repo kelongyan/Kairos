@@ -34,9 +34,35 @@ export interface CitationResponse {
   score: number;
 }
 
+export interface RetrievalHitResponse {
+  doc_id: string;
+  chunk_id: string;
+  section: string;
+  page_start: number;
+  page_end: number;
+  chunk_type: string;
+  chunk_index: number;
+  score: number;
+  retrieval_source: string;
+  text: string;
+}
+
+export type EvidenceItemResponse = RetrievalHitResponse;
+
+export interface RetrievalTraceResponse {
+  query: string;
+  rewritten_query: string;
+  dense_results: RetrievalHitResponse[];
+  sparse_results: RetrievalHitResponse[];
+  fused_results: RetrievalHitResponse[];
+  reranked_results: RetrievalHitResponse[];
+  evidence_pack: EvidenceItemResponse[];
+}
+
 export interface ChatResponse {
   answer: string;
   citations: CitationResponse[];
+  trace?: RetrievalTraceResponse | null;
 }
 
 export interface ChatRequest {

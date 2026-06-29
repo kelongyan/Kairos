@@ -1,9 +1,9 @@
-# ScholarPilot Frontend
+# Kairos Frontend
 
-Next.js web UI for ScholarPilot. Phase 0 provides the application skeleton with a
-static three-column workspace layout (document library / reader & chat /
-citation panel). Document upload, chat, and citation features are wired up in
-Phase 1.
+Next.js web UI for Kairos, a verifiable team knowledge-base Q&A and knowledge
+operations platform. The current interface is a three-column workspace with a
+document library, chat area, and citation / evidence panel. The next product
+phase adds knowledge-base selection, multi-document Q&A, and feedback signals.
 
 ## Requirements
 

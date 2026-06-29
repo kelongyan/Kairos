@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# ScholarPilot — Docker Engine 安装脚本（WSL Ubuntu-22.04 内执行）
+# Kairos — Docker Engine 安装脚本（WSL Ubuntu-22.04 内执行）
 #
 # 用途：在 WSL Ubuntu-22.04 发行版内安装 Docker Engine + docker compose 插件，
 #       并配置为 systemd 自启。WSL 数据已在 D:\WSL\Ubuntu\ext4.vhdx，
@@ -16,7 +16,7 @@
 set -euo pipefail
 
 echo "=========================================="
-echo " ScholarPilot: Docker Engine 安装 (WSL)"
+echo " Kairos: Docker Engine 安装 (WSL)"
 echo "=========================================="
 
 # 0. 确认在 WSL 内
@@ -90,7 +90,7 @@ echo "     wsl --shutdown  (在 Windows 终端)"
 echo "     wsl -d Ubuntu-22.04"
 echo "  2. 验证免 sudo："
 echo "     docker ps"
-echo "  3. 启动 ScholarPilot 基础设施："
+echo "  3. 启动 Kairos 基础设施："
 echo "     cd /mnt/d/ScholarPilot"
 echo "     docker compose up -d"
 echo "     docker compose ps"

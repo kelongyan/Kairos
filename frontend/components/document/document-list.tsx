@@ -15,8 +15,8 @@ const STATUS_STYLES: Record<DocumentStatus, string> = {
 };
 
 /**
- * Document library: upload + list with live status polling.
- * Documents still processing (parsing/indexing) are polled every 2s.
+ * Source library: upload + list with live status polling.
+ * Sources still processing (parsing/indexing) are polled every 2s.
  */
 export function DocumentList({
   selectedDocId,
@@ -44,12 +44,10 @@ export function DocumentList({
       <UploadPanel />
 
       <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-        Documents
+        Sources
       </h2>
 
-      {isLoading && (
-        <p className="text-sm text-zinc-400">Loading…</p>
-      )}
+      {isLoading && <p className="text-sm text-zinc-400">Loading...</p>}
       {error && (
         <p className="text-sm text-red-600 dark:text-red-400">
           Backend not reachable. Is the API running on port 8000?
@@ -88,7 +86,7 @@ export function DocumentList({
         ))}
         {!isLoading && documents.length === 0 && !error && (
           <li className="rounded-lg border border-dashed border-zinc-300 p-4 text-center text-sm text-zinc-400 dark:border-zinc-700">
-            No documents yet
+            No sources yet
           </li>
         )}
       </ul>

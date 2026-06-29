@@ -35,7 +35,7 @@ async def chat(
             "Wait for indexing to complete.",
         )
 
-    result = chat_service.answer_question(request.doc_id, request.question)
+    result = chat_service.answer_question(request.doc_id, request.question, db=db)
     citations = [
         CitationResponse(
             doc_id=c.doc_id,
@@ -47,4 +47,4 @@ async def chat(
         )
         for c in result.citations
     ]
-    return ChatResponse(answer=result.answer, citations=citations)
+    return ChatResponse(answer=result.answer, citations=citations, trace=result.trace)

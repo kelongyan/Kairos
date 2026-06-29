@@ -1,6 +1,9 @@
-# ScholarPilot 开发环境配置
+# Kairos 开发环境配置
 
-本文档记录 ScholarPilot 的开发环境状态与配置方法。
+本文档记录 Kairos 的开发环境状态与配置方法。
+
+> 当前本地工作目录仍是 `D:\ScholarPilot` / `/mnt/d/ScholarPilot`。
+> GitHub 仓库已重命名为 `Kairos`，本地目录名后续手动修改后再同步路径示例。
 
 ---
 
@@ -91,7 +94,7 @@ WSL 内原有的本地 PostgreSQL 14 和 Redis 已停止并禁用自启（`syste
 
 ---
 
-## 启动 ScholarPilot（完整流程）
+## 启动 Kairos（完整流程）
 
 ### 1. 启动基础设施（WSL 内）
 

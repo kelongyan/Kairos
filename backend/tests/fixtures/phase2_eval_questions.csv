@@ -1,0 +1,4 @@
+question,expected_keywords,notes
+"What retrieval pipeline is used for answering questions?","rewrite,BM25,dense,RRF,rerank,evidence","Should mention hybrid retrieval pipeline stages"
+"How does the system behave when evidence is insufficient?","当前资料不足以支持可靠回答,insufficient,evidence","Should refuse rather than fabricate"
+"What can I inspect in the retrieval trace?","query,rewritten query,evidence pack,dense,sparse,reranked","Should mention trace visibility fields"

@@ -1,12 +1,14 @@
-# ScholarPilot Backend
+# Kairos Backend
 
-FastAPI backend for ScholarPilot — an AI Research Copilot for paper reading,
-evidence-first retrieval, and citation-grounded question answering.
+FastAPI backend for Kairos, a verifiable team knowledge-base Q&A and knowledge
+operations platform. The backend handles document ingestion, parsing, chunking,
+embedding, Hybrid RAG retrieval, evidence-backed answers, citations, and trace
+data.
 
-Phase 1 implements the single-paper RAG MVP:
+The current implemented path is:
 
 ```
-Upload PDF → Parse → Chunk → Embed → Index → Retrieve → Answer → Citations
+Upload PDF → Parse → Chunk → Embed → Index → Hybrid Retrieve → Answer → Citations + Trace
 ```
 
 ## Requirements

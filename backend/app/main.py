@@ -39,8 +39,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="AI Research Copilot for paper reading, evidence-first retrieval, "
-    "and citation-grounded question answering.",
+    description="Verifiable team knowledge-base Q&A and knowledge operations API.",
     lifespan=lifespan,
 )
 

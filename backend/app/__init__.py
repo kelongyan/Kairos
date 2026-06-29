@@ -1,3 +1,3 @@
-"""ScholarPilot backend application package."""
+"""Kairos backend application package."""
 
 __version__ = "0.1.0"

@@ -1,7 +1,7 @@
 [project]
-name = "scholarpilot-backend"
+name = "kairos-backend"
 version = "0.1.0"
-description = "ScholarPilot backend - AI Research Copilot for paper reading and evidence-first retrieval"
+description = "Kairos backend - verifiable team knowledge-base Q&A and knowledge operations"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
@@ -21,6 +21,7 @@ dependencies = [
     "openai>=1.50.0",
     "anthropic>=0.39.0",
     "tiktoken>=0.7.0",
+    "rank-bm25>=0.2.2",
 ]
 
 [project.optional-dependencies]

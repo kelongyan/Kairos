@@ -1,10 +1,10 @@
-# ScholarPilot 本地模型部署与云端 API 配置
+# Kairos 本地模型部署与云端 API 配置
 
 ---
 
 ## 1. 部署目的
 
-ScholarPilot RAG 流水线需要两个核心模型：
+Kairos RAG 流水线需要两个核心模型：
 
 - **LLM** — 用于答案生成、查询改写、引文验证。
 - **Embedding** — 用于文档分块向量化与语义检索。
@@ -73,14 +73,14 @@ Windows Host
 ├── Ollama Server (localhost:11434)
 │   ├── qwen3:14b      → LLM 生成
 │   └── bge-m3:latest  → Embedding
-└── ScholarPilot Backend
+└── Kairos Backend
     ├── LLMProvider       → base_url = http://localhost:11434/v1
     └── EmbeddingProvider → base_url = http://localhost:11434/v1
 
 
 模式 B：全云端（生产 / 免 GPU 维护）
 ──────────────────────────────────
-ScholarPilot Backend
+Kairos Backend
 ├── LLMProvider       → 云端 API（Gemini / DeepSeek / Qwen-Max / OpenAI）
 └── EmbeddingProvider → 云端 API（Gemini / OpenAI / Qwen3 Embedding）
 
@@ -236,7 +236,7 @@ curl.exe http://localhost:11434/api/embed `
 curl.exe https://api.futureppo.top/v1/embeddings `
   -H "Content-Type: application/json" `
   -H "Authorization: Bearer sk-xxxxx" `
-  -d '{\"model\":\"gemini-embedding-001\",\"input\":\"ScholarPilot test\"}'
+  -d '{\"model\":\"gemini-embedding-001\",\"input\":\"Kairos test\"}'
 ```
 
 #### 7.2.2 LLM（DeepSeek 示例）
@@ -424,4 +424,4 @@ curl.exe https://api.futureppo.top/v1/embeddings `
 ---
 
 *文档版本: 2026-06-29*
-*部署人: AI Assistant (ScholarPilot)*
+*部署人: AI Assistant (Kairos)*

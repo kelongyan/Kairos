@@ -1,423 +1,305 @@
-# ScholarPilot Development Roadmap
+# Kairos Development Roadmap
 
 ---
 
-## 1. 目标与范围
+## 1. 路线图定位
 
-本文档用于指导 ScholarPilot 的分阶段建设。项目目标是构建一个面向论文阅读、证据检索、文献分析和研究任务辅助的 AI Research Copilot。
+本文档描述 Kairos 按新产品定位推进的开发阶段。新主线是“可验证的团队知识库问答与知识运营平台”，原有科研论文 Copilot 能力作为垂直场景保留，Multi-Agent 作为后期受控工作流能力保留。
 
-当前阶段的核心原则：
-
-- 先做稳定闭环，再做高级能力。
-- 先保证答案可追溯，再追求生成效果。
-- 先保证模块边界清晰，再扩大功能范围。
-- 每个阶段必须有明确交付物、验收标准和完成标记。
+当前代码已经完成核心 RAG 引擎的大部分基础能力。后续路线不从零开始，而是在现有 FastAPI、Next.js、PostgreSQL、Qdrant、Redis/RQ 和 Hybrid RAG 代码上继续演进。
 
 ---
 
-## 2. 阶段管理规则
-
-### 2.1 阶段状态
-
-每个阶段使用以下状态标记：
+## 2. 阶段状态规则
 
 | 状态 | 含义 |
 |---|---|
 | `Not Started` | 尚未开始 |
 | `In Progress` | 正在开发 |
-| `Blocked` | 被外部条件阻塞 |
-| `Review` | 开发完成，等待检查 |
-| `Done` | 验收通过并已推送 |
+| `Review` | 功能完成，等待运行验证、文档同步、提交或推送 |
+| `Done` | 验收通过，测试记录完整，已提交并推送 |
+| `Blocked` | 被外部条件或产品决策阻塞 |
 
-### 2.2 阶段完成定义
+阶段标记为 `Done` 必须同时满足：
 
-一个阶段只有同时满足以下条件，才允许标记为 `Done`：
-
-- 阶段功能已实现。
-- 必要测试已通过。
-- 本地启动或关键流程已验证。
-- 文档和配置与实际实现一致。
-- 阶段完成记录已更新。
-- 代码已提交到 Git。
-- 代码已推送到 GitHub 远程仓库。
-
-### 2.3 阶段记录位置
-
-建议后续创建并维护：
-
-```text
-doc/04-development-progress.md
-```
-
-每完成一个阶段，在该文件中记录：
-
-- 阶段名称
-- 完成时间
-- 本阶段完成内容
-- 测试命令和结果
-- 已知问题
-- Git commit hash
-- GitHub 推送分支
+- 功能实现完成。
+- 必要测试通过。
+- 关键运行流程已验证。
+- 文档与代码一致。
+- `doc/04-development-progress.md` 已更新。
+- 相关代码已 commit 并 push。
 
 ---
 
 ## 3. 总体路线
 
 ```text
-Phase 0  项目基础建设
-Phase 1  单篇论文 RAG MVP
-Phase 2  高质量 Hybrid RAG
-Phase 3  科研任务工作流
-Phase 4  趋势追踪与知识增强
-Phase 5  产品化与部署
+Phase 0  工程基础与运行环境
+Phase 1  核心 RAG 闭环
+Phase 2  Hybrid RAG 与 Trace 引擎
+Phase 3  知识库产品层
+Phase 4  知识运营、权限、审计、评测与可观测
+Phase 5  Multi-Agent 协作引擎
+Phase 6  生产化、统计看板与扩展生态
 ```
 
-建议严格按顺序推进。除非前一阶段达到 `Done`，否则不进入下一阶段的大规模开发。
+当前优先级：完成 Phase 2 审核收尾，然后进入 Phase 3。
+
+技术采用原则：
+
+- Phase 3 不引入大型新基础设施，优先复用现有 PostgreSQL、Qdrant、Redis/RQ 和 RAG pipeline。
+- Phase 4 开始补 trace、评测、权限和审计，但先用自建最小实现。
+- Phase 5 才引入 LangGraph 等 Agent 编排工具。
+- Phase 6 后再评估 Docling、Langfuse/Phoenix、LiteLLM、OpenSearch、Milvus、MCP、A2A、GraphRAG 等升级项。
 
 ---
 
-## 4. Phase 0：项目基础建设
+## 4. Phase 0：工程基础与运行环境
 
-### 4.1 阶段目标
+状态：`Done`
 
-建立项目基础结构、开发规范、运行方式和最小工程骨架，为后续功能开发提供稳定底座。
+目标：
 
-### 4.2 主要任务
+- 建立前后端工程骨架。
+- 建立本地运行、测试、lint、配置管理和仓库规范。
 
-- 初始化 Git 仓库。
-- 配置 GitHub 远程仓库。
-- 建立前后端目录结构。
-- 建立基础后端 FastAPI 项目。
-- 建立基础前端 Next.js 项目。
-- 建立统一配置管理。
-- 建立本地开发启动方式。
-- 建立基础测试框架。
-- 建立阶段进度记录文件。
+已交付：
 
-### 4.3 建议目录结构
+- FastAPI 后端骨架。
+- Next.js 前端骨架。
+- `uv`、Ruff、Pytest、pnpm、ESLint 基础配置。
+- 项目文档、规则文档和基础 README。
+
+验收标准：
+
+- 后端健康检查可启动。
+- 前端页面可启动。
+- 后端测试和前端 lint/build 可运行。
+
+---
+
+## 5. Phase 1：核心 RAG 闭环
+
+状态：`Done`
+
+目标：
 
 ```text
-ScholarPilot/
-├─ backend/
-│  ├─ app/
-│  │  ├─ api/
-│  │  ├─ core/
-│  │  ├─ models/
-│  │  ├─ schemas/
-│  │  ├─ services/
-│  │  ├─ repositories/
-│  │  └─ main.py
-│  ├─ tests/
-│  ├─ pyproject.toml
-│  └─ README.md
-├─ frontend/
-│  ├─ app/
-│  ├─ components/
-│  ├─ lib/
-│  ├─ package.json
-│  ├─ pnpm-lock.yaml
-│  └─ README.md
-├─ doc/
-│  ├─ 01-project-overview.md
-│  ├─ 02-development-roadmap.md
-│  ├─ 03-technology-stack.md
-│  └─ 04-development-progress.md
-├─ README.md
-├─ RULE.md
-└─ .gitignore
+上传 PDF -> 解析 -> 切片 -> embedding -> 向量索引 -> 检索 -> 问答 -> 引用返回
 ```
 
-### 4.4 验收标准
+已交付：
 
-- `backend` 能启动健康检查接口。
-- `frontend` 能启动基础页面。
-- 后端测试命令可运行。
-- 前端 lint 或类型检查命令可运行。
-- GitHub 远程仓库已配置。
-- 初始代码已提交并推送。
+- PDF 上传和本地文件保存。
+- 文档、chunk、citation 数据模型。
+- PyMuPDF 文本解析和页码保留。
+- token chunking 和 overlap。
+- embedding provider、LLM provider。
+- Qdrant 向量索引。
+- Redis/RQ 异步处理。
+- `/documents` 和 `/chat` API。
+- 前端三栏工作区、上传面板、文档列表、Chat、引用面板。
 
-### 4.5 阶段状态
+遗留限制：
 
-`Not Started`
+- 仅支持 PDF。
+- 问答范围是单文档 `doc_id`。
+- 没有知识库实体、用户、权限和会话。
 
 ---
 
-## 5. Phase 1：单篇论文 RAG MVP
+## 6. Phase 2：Hybrid RAG 与 Trace 引擎
 
-### 5.1 阶段目标
+状态：`Review`
 
-完成最小可用闭环：
+目标：
 
-```text
-上传 PDF -> 解析文本 -> chunk 切分 -> embedding -> 检索 -> 问答 -> 返回引用
-```
+把基础向量检索升级为可调试、可评测的 Hybrid RAG。
 
-该阶段不追求复杂 Agent，不追求全量多模态解析，重点是稳定、可追溯、可验证。
+已实现能力：
 
-### 5.2 主要功能
-
-- PDF 上传。
-- 文档元数据保存。
-- PDF 文本解析。
-- chunk 切分。
-- embedding 生成。
-- 向量索引。
-- 单篇论文检索。
-- 基于证据的 Chat API。
-- 答案引用来源返回。
-- 简单三栏前端原型。
-
-### 5.3 后端模块
-
-| 模块 | 职责 |
-|---|---|
-| Document API | 上传、查询文档状态 |
-| Parser Service | 解析 PDF 文本和页码 |
-| Chunk Service | 切分文本并保留来源信息 |
-| Embedding Service | 生成向量 |
-| Vector Store | 保存和检索向量 |
-| Chat Service | 组织证据并调用 LLM |
-| Citation Service | 返回引用 chunk、页码和原文片段 |
-
-### 5.4 前端页面
-
-- 文档上传区。
-- 文档列表。
-- Chat 对话区。
-- 引用来源面板。
-
-### 5.5 验收标准
-
-- 至少 10 篇常规论文 PDF 可解析。
-- 每篇论文可以完成索引。
-- 用户可以针对单篇论文提问。
-- 答案必须返回至少一个引用来源。
-- 引用来源包含文档名、页码、chunk 原文片段。
-- 后端核心服务有单元测试。
-- 关键 API 有集成测试。
-- 本阶段代码已提交并推送 GitHub。
-
-### 5.6 阶段状态
-
-`Not Started`
-
----
-
-## 6. Phase 2：高质量 Hybrid RAG
-
-### 6.1 阶段目标
-
-将基础向量检索升级为更可靠的 Hybrid RAG，提高召回质量、引用质量和答案可信度。
-
-### 6.2 主要功能
-
-- Query rewrite。
-- Query decomposition。
-- BM25 稀疏检索。
-- embedding 稠密检索。
+- query rewrite seam。
+- dense retrieval + BM25 sparse retrieval。
 - RRF 融合排序。
-- reranker 二阶段重排。
-- Evidence Pack 构建。
-- 检索 trace 记录。
-- 基础 RAG 评测集。
+- reranker provider 边界和 deterministic fallback reranker。
+- Evidence Pack。
+- retrieval trace 返回到前端。
+- 最小固定评测 fixture。
 
-### 6.3 Evidence Pack 要求
+完成前还需要：
 
-每次问答前，系统必须先构建 Evidence Pack：
+- 运行真实端到端流程：上传 PDF、等待 indexed、提问、查看 citations 和 trace。
+- 完成文档状态同步。
+- 创建 commit 并 push。
 
-```json
-{
-  "question": "...",
-  "rewritten_query": "...",
-  "evidence": [
-    {
-      "doc_id": "...",
-      "chunk_id": "...",
-      "section": "...",
-      "page": 1,
-      "text": "...",
-      "score": 0.9,
-      "retrieval_source": "dense+sparse+rerank"
-    }
-  ]
-}
-```
+验收标准：
 
-LLM 只能基于 Evidence Pack 生成答案。证据不足时必须明确提示不足。
-
-### 6.4 验收标准
-
-- 相比 Phase 1 的纯向量检索，Top-K 命中率提升。
-- 每次问答可查看检索 trace。
-- Reranker 对最终上下文排序生效。
-- Evidence Pack 可被持久化或记录。
-- 至少有一组固定评测问题可重复运行。
-- 本阶段代码已提交并推送 GitHub。
-
-### 6.5 阶段状态
-
-`Not Started`
+- `/chat` 每次回答可查看 trace。
+- Evidence Pack 与 citations 对齐。
+- 后端相关测试通过。
+- 前端 lint/build 通过。
 
 ---
 
-## 7. Phase 3：科研任务工作流
+## 7. Phase 3：知识库产品层
 
-### 7.1 阶段目标
+状态：`Not Started`
 
-从“问答系统”升级为“科研任务工作台”，支持单篇总结、多论文对比、阅读路径推荐和 related work 草稿。
+这是下一阶段主任务。
 
-### 7.2 主要功能
+目标：
 
-- 单篇论文精读总结。
-- 多论文结构化对比。
-- 研究主题阅读路径推荐。
-- Related Work 草稿生成。
-- Agentic RAG 工作流。
-- 长任务状态管理。
-- 人工确认节点。
+从“单文档 RAG”升级为“多知识库、多文档智能知识库”。
 
-### 7.3 Agent 工作流
+主要功能：
 
-```text
-Planner Agent
-  -> Retriever Agent
-  -> Evidence Synthesizer
-  -> Reviewer Agent
-  -> Final Output
-```
+- 新增 `KnowledgeBase` 数据模型。
+- 文档归属于知识库。
+- 支持知识库列表、创建、更新、归档或删除。
+- 文档列表按知识库过滤。
+- `/chat` 支持 `knowledge_base_id` 范围检索。
+- retrieval service 支持多文档候选召回。
+- 前端增加知识库选择、知识库文档分组和基础空状态。
+- 记录用户问题、答案、引用和证据不足状态。
+- 支持最小反馈入口：有用/无用、引用准确/不准确。
+- 为后续权限预留 owner、visibility、access policy 字段。
 
-### 7.4 Agent 边界
+验收标准：
 
-- Planner 只负责拆解任务和选择流程。
-- Retriever 只负责检索和工具调用。
-- Evidence Synthesizer 只负责证据整理和结构化归纳。
-- Reviewer 只负责检查引用、遗漏和不确定性。
-- 最终答案必须保留引用来源。
-
-### 7.5 验收标准
-
-- 单篇总结输出结构稳定。
-- 多论文对比可以输出表格和结论。
-- Related Work 草稿包含引用来源。
-- 长任务可以查询状态。
-- Agent 每一步有 trace。
-- 任务失败时能返回明确原因。
-- 本阶段代码已提交并推送 GitHub。
-
-### 7.6 阶段状态
-
-`Not Started`
+- 用户可以创建知识库并上传文档到指定知识库。
+- 用户可以对一个知识库内多份文档提问。
+- 引用能标识来源文档、页码和 chunk。
+- 不破坏单文档问答兼容路径。
+- 用户反馈和无答案问题可以被记录。
+- 后端测试覆盖知识库、文档归属和知识库级问答。
 
 ---
 
-## 8. Phase 4：趋势追踪与知识增强
+## 8. Phase 4：知识运营、权限、审计、评测与可观测
 
-### 8.1 阶段目标
+状态：`Not Started`
 
-支持对研究主题进行持续追踪，并通过图谱、聚类和文档增强解析提升跨文献分析能力。
+目标：
 
-### 8.2 主要功能
+补齐团队知识库真正可运营所需的安全、反馈、质量管理和可观测能力。
 
-- arXiv 主题订阅。
-- Semantic Scholar 论文检索。
-- 周期性论文抓取。
-- 研究主题聚类。
-- 趋势报告生成。
-- GraphRAG 原型。
-- 表格、图注、公式增强解析。
-- 论文关系可视化。
+主要功能：
 
-### 8.3 验收标准
+- 用户登录和 JWT 会话。
+- RBAC 基础角色：管理员、知识库管理员、普通用户。
+- 知识库级访问控制。
+- 操作审计：文档上传、删除、重建索引、权限修改。
+- Trace 持久化：query、rewrite、检索结果、Evidence Pack、answer、citations、latency、model。
+- 评测 API：固定 QA 集、运行记录、结果查看。
+- 前端轻量反馈：有用/无用、引用准确/不准确。
+- 知识运营清单：高频问题、无答案问题、低质量引用、解析失败文档、索引失败文档。
+- 管理员处理状态：待处理、已补充文档、已忽略、已重建索引。
 
-- 用户可以创建研究主题订阅。
-- 系统可以定期获取候选论文。
-- 趋势报告包含代表论文、主题聚类和变化说明。
-- GraphRAG 原型能回答简单跨论文关系问题。
-- 增强解析不会破坏 Phase 1/2 的基础检索链路。
-- 本阶段代码已提交并推送 GitHub。
+可选工具边界：
 
-### 8.4 阶段状态
+- 可引入 Ragas 或 DeepEval 做离线评测，但前提是已有固定评测集和 trace 表。
+- 暂不引入 Langfuse 或 Phoenix；先保证自建 trace 数据结构稳定。
+- 暂不引入 OpenFGA 或 Casbin；先实现最小 RBAC。
 
-`Not Started`
+验收标准：
+
+- 未授权用户不能访问受限知识库。
+- 每次问答生成可查询 trace。
+- 至少一组评测集可重复运行。
+- 关键操作写入审计日志。
+- 管理员可以看到无答案问题和低质量引用清单。
+- 用户反馈能进入后续评测和知识库改进流程。
 
 ---
 
-## 9. Phase 5：产品化与部署
+## 9. Phase 5：Multi-Agent 协作引擎
 
-### 9.1 阶段目标
+状态：`Not Started`
 
-将系统从本地开发版本整理成可部署、可维护、可观测的产品形态。
+目标：
 
-### 9.2 主要功能
+在已有知识库、权限、知识运营和 trace 基础上，引入受控 Agent 工作流。
 
-- Docker 化部署。
-- 环境变量配置。
-- 日志系统。
-- 错误追踪。
-- 基础权限系统。
-- 数据备份策略。
-- API 限流。
-- 成本统计。
-- 部署文档。
+主要功能：
 
-### 9.3 验收标准
+- LangGraph 或等价状态机式编排。
+- Planner Agent：任务分类和步骤规划。
+- Retrieval Agent：本地知识库检索，后续扩展外部搜索。
+- Analyst Agent：证据对比、趋势分析、逻辑归纳。
+- Writer Agent：结构化回答或草稿生成。
+- Reviewer Agent：引用支撑和幻觉检查。
+- Agent trace 可视化基础数据。
+- 知识运营 Agent：基于反馈和无答案问题生成 FAQ 草稿、补文档建议或重建索引建议。
 
-- 使用 Docker 可以启动完整服务。
-- 后端、前端、数据库、向量库配置清晰。
-- 关键服务有健康检查。
+工具边界：
+
+- 推荐引入 LangGraph。
+- 不使用开放式无限循环 Agent。
+- 不引入 MCP 工具市场。
+- 不做 A2A 跨系统 Agent 协作。
+- 不自动写入、删除或修改外部系统数据。
+- 外部搜索工具只作为受控 Retrieval Agent 能力，必须有白名单和 trace。
+
+验收标准：
+
+- 简单问题走短链路，复杂问题走多 Agent 链路。
+- 每个 Agent 步骤有输入、输出、耗时和状态。
+- 最大迭代次数和失败退出策略生效。
+- 最终输出保留 citations。
+
+---
+
+## 10. Phase 6：生产化、统计看板与扩展生态
+
+状态：`Not Started`
+
+目标：
+
+将系统整理为可部署、可运维、可观察的产品形态。
+
+主要功能：
+
+- Docker 化完整部署。
+- 生产环境配置和密钥管理。
+- 日志、错误追踪、限流和备份。
+- 平台统计看板：用户数、知识库数、文档数、问答次数。
+- 知识库看板：文档增长、热门问题、质量趋势。
+- 运营看板：无答案问题、低质量引用、用户反馈、待处理知识缺口。
+- 成本统计：模型、token、Agent 步骤消耗。
+- 多格式解析增强：DOCX、Markdown、HTML、TXT、PPTX。
+- 长期扩展评估：GraphRAG、MCP、A2A、移动端、企业 IM。
+
+后期升级候选：
+
+| 方向 | 候选工具 | 触发条件 |
+|---|---|---|
+| 文档解析增强 | Docling、Unstructured、MarkItDown、Tika | 多格式和复杂版面成为明确需求 |
+| 检索扩展 | Qdrant sparse vector、OpenSearch、Elasticsearch | Python BM25 或 Qdrant 单库无法满足规模 |
+| 向量集群 | Milvus | Qdrant 容量、并发或集群能力不足 |
+| 模型网关 | LiteLLM Proxy | 多模型供应商、预算、限流、fallback 复杂化 |
+| 观测平台 | Langfuse、Phoenix | 自建 trace 不能满足分析、成本和评测需求 |
+| 权限系统 | Casbin、OpenFGA | 简单 RBAC 无法覆盖团队共享和继承权限 |
+| 工具生态 | MCP、A2A | 出现稳定外部工具市场或跨 Agent 系统集成需求 |
+
+验收标准：
+
+- 一套命令可启动完整服务。
 - 生产配置不包含密钥。
-- 日志可定位主要错误。
-- 本阶段代码已提交并推送 GitHub。
-
-### 9.4 阶段状态
-
-`Not Started`
+- 关键服务有健康检查。
+- 看板能展示核心运营指标。
 
 ---
 
-## 10. 开发优先级
+## 11. 当前开发建议
 
-### 10.1 必须优先保证
+Phase 3 开发前应先完成 Phase 2 收尾。进入 Phase 3 后，避免同时启动复杂权限、Agent 和大屏看板，先把知识库实体、多文档检索和最小知识运营信号打稳。
 
-- 文档解析稳定。
-- chunk 与来源绑定准确。
-- 检索结果可追踪。
-- 答案引用可回溯。
-- 模块职责清晰。
-- 测试可以重复运行。
+推荐拆分顺序：
 
-### 10.2 暂缓事项
-
-- 复杂多用户权限。
-- 大规模分布式部署。
-- 自训练模型。
-- 完整论文写作自动化。
-- 过早引入复杂图数据库。
-- 过早优化 UI 动效。
-
----
-
-## 11. 阶段推进建议
-
-每个阶段开始前：
-
-- 明确本阶段目标。
-- 拆分任务列表。
-- 标记阶段状态为 `In Progress`。
-- 创建对应开发分支或确认当前分支策略。
-
-每个阶段开发中：
-
-- 小步提交。
-- 每个模块保持低耦合。
-- 新增功能必须有验证方式。
-- 阻塞问题及时记录。
-
-每个阶段完成后：
-
-- 运行测试。
-- 更新阶段状态。
-- 更新阶段完成记录。
-- 提交代码。
-- 推送 GitHub。
-- 再进入下一阶段。
+1. 数据模型：`KnowledgeBase`、文档归属字段、迁移。
+2. API：知识库 CRUD、按知识库列文档。
+3. 检索：`knowledge_base_id` 多文档 retrieval。
+4. Chat：兼容 `doc_id`，新增 `knowledge_base_id`。
+5. 反馈：记录用户问题、答案、引用、证据不足和基础反馈。
+6. 前端：知识库切换、文档分组、知识库级提问、最小反馈入口。
+7. 测试：模型、API、检索范围、反馈记录和前端构建。

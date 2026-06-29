@@ -24,13 +24,13 @@ class Settings(BaseSettings):
     )
 
     # --- Application ---
-    app_name: str = "ScholarPilot"
+    app_name: str = "Kairos"
     app_version: str = "0.1.0"
     api_prefix: str = ""
     debug: bool = False
 
     # --- Storage ---
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/scholarpilot"
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/kairos"
     redis_url: str = "redis://localhost:6379/0"
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "chunks"
@@ -56,6 +56,9 @@ class Settings(BaseSettings):
 
     # --- RAG ---
     retrieval_top_k: int = 5
+    sparse_retrieval_top_k: int = 8
+    rerank_top_k: int = 5
+    reranker_provider: str = "simple"
     chunk_size: int = 800
     chunk_overlap: int = 120
 

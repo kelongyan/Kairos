@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from app.schemas.rag import RetrievalTraceResponse
+
 
 class ChatRequest(BaseModel):
     """A question about a single document."""
@@ -28,3 +30,4 @@ class ChatResponse(BaseModel):
 
     answer: str
     citations: list[CitationResponse]
+    trace: RetrievalTraceResponse | None = None
