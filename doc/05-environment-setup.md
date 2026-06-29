@@ -4,145 +4,171 @@
 
 ---
 
-## 环境总览
+## 环境总览（当前实际状态）
 
-| 组件 | 状态 | 位置 |
+| 组件 | 状态 | 位置 / 说明 |
 |---|---|---|
-| Python | ✅ 3.13.9 (miniconda) | `D:\miniconda3\python.exe` |
-| uv | ✅ 0.11.25 | `C:\Users\admin\AppData\Roaming\Python\Python313\Scripts\uv.exe` |
+| Python (Windows) | ✅ 3.13.9 (miniconda) | `D:\miniconda3\python.exe` |
+| uv (Windows) | ✅ 0.11.25 | `C:\Users\admin\AppData\Roaming\Python\Python313\Scripts\uv.exe` |
 | Node.js | ✅ v24.14.0 | `C:\Program Files\nodejs\` |
 | pnpm | ✅ 11.5.2 | 全局（PATH 可用） |
-| WSL Ubuntu-22.04 | ✅ 运行中 | 数据在 `D:\WSL\Ubuntu\ext4.vhdx` |
-| Docker Engine | ⏳ 待安装（WSL 内） | 安装后数据在 D 盘 vhdx 内 |
-| PostgreSQL/Qdrant/Redis | ⏳ 待启动 | 通过 `docker compose` |
+| WSL Ubuntu-22.04 | ✅ 运行中 | 数据在 `D:\WSL\Ubuntu\ext4.vhdx`（164G） |
+| uv (WSL) | ✅ 0.11.25 | `~/.local/bin/uv`（WSL 内） |
+| Python (WSL) | ✅ 3.12.13 | uv 自动下载，WSL venv `.venv-wsl` |
+| Docker Engine | ✅ 29.6.1 + compose 5.2.0 | 装在 WSL Ubuntu 内，数据在 D 盘 |
+| PostgreSQL/Qdrant/Redis | ✅ Docker 容器运行中 | 端口 5432/6333/6379 |
 
-**关键：WSL 数据已在 D 盘**（`D:\WSL\Ubuntu\ext4.vhdx`，164G），因此 Docker 装进 WSL 后，所有容器数据、镜像、卷都天然存储在 D 盘，无需额外迁移。
+**关键：WSL 数据已在 D 盘**（`D:\WSL\Ubuntu\ext4.vhdx`），Docker 数据天然在 D 盘，无需迁移。
+
+---
+
+## 架构：API 在 Windows，Worker 在 WSL
+
+由于 **RQ worker 依赖 `os.fork()`，Windows 不支持**，采用分离部署：
+
+| 服务 | 运行环境 | 原因 |
+|---|---|---|
+| FastAPI API | Windows (uvicorn) | 无 fork 依赖，热重载方便 |
+| RQ Worker | WSL Ubuntu (Linux) | RQ 需要 `os.fork()` |
+| PostgreSQL/Qdrant/Redis | WSL Docker | 统一基础设施 |
+
+API 和 Worker 共享同一个 PostgreSQL（Docker），文件路径用 **POSIX 相对路径**（`storage/xxx.pdf`）存储，确保跨平台兼容。
 
 ---
 
 ## uv 使用说明
 
-`uv` 不在 bash PATH 中，需用完整路径调用：
+### Windows 侧（API）
+
+`uv` 不在 bash PATH，需用完整路径：
 
 ```bash
-# 设置别名（每次会话）
-export UV="/c/Users/admin/AppData/Roaming/Python/Python313/Scripts/uv.exe"
+export UV="/c/Users/admin/Appdata/Roaming/Python/Python313/Scripts/uv.exe"
+export UV_LINK_MODE=copy   # 避免 hardlink 警告
 
-# 后端命令
 cd D:/ScholarPilot/backend
 "$UV" sync --extra dev
-"$UV" run pytest
-"$UV" run ruff check
 "$UV" run uvicorn app.main:app --reload
 ```
 
----
-
-## Docker Engine 安装（WSL 内）
-
-Docker Desktop 未安装（`C:\Program Files\Docker\` 为空，仅有死链接残留）。
-采用更轻量的方案：在 WSL Ubuntu-22.04 内安装 Docker Engine。
-
-### 安装步骤
-
-在 **Windows 终端** 执行（脚本会提示输入 sudo 密码）：
+### WSL 侧（Worker）
 
 ```bash
-wsl -d Ubuntu-22.04 -- bash /mnt/d/ScholarPilot/scripts/install-docker-wsl.sh
-```
-
-脚本会：
-1. 清理 Docker Desktop 残留的死链接（`/usr/bin/docker`、`/usr/bin/hub-tool`）
-2. 添加 Docker 官方 apt 源
-3. 安装 `docker-ce` + `docker-compose-plugin`
-4. 将当前用户加入 `docker` 组（免 sudo）
-5. 用 systemd 启用 docker 自启
-6. 验证安装
-
-### 安装后生效
-
-```bash
-# 让 docker 组生效（必须重启 WSL）
-wsl --shutdown
 wsl -d Ubuntu-22.04
-
-# 验证免 sudo
-docker ps
-docker compose version
+export PATH="$HOME/.local/bin:$PATH"
+cd /mnt/d/ScholarPilot/backend
+UV_PROJECT_ENVIRONMENT=.venv-wsl uv sync --extra dev --python 3.12
 ```
 
 ---
 
-## 启动 ScholarPilot 基础设施
+## Docker（已安装完成）
 
-Docker 装好后，在 **WSL 内** 执行：
+Docker Engine 装在 WSL Ubuntu-22.04 内（非 Docker Desktop）。
+- 镜像加速器已配置（`/etc/docker/daemon.json`）：`docker.1ms.run`、`docker.xuanyuan.me`、`docker.m.daocloud.io`
+- systemd 自启已启用
+- 用户 `ykl` 已加入 docker 组
+
+**注意**：docker 命令必须在 WSL 内执行，Windows 侧无 docker CLI。
+
+### 常用命令（WSL 内）
 
 ```bash
 cd /mnt/d/ScholarPilot
-docker compose up -d
-docker compose ps          # 等待 postgres/qdrant/redis 变为 healthy
+docker compose up -d        # 启动 postgres + qdrant + redis
+docker compose ps           # 查看状态
+docker compose down         # 停止（保留数据）
+docker compose down -v      # 停止并删除数据卷
+docker compose logs -f      # 查看日志
 ```
 
-服务端口：
-- PostgreSQL: `localhost:5432`
-- Qdrant: `localhost:6333` (REST) / `6334` (gRPC)
-- Redis: `localhost:6379`
+### 端口冲突处理（已完成）
 
-数据卷（持久化在 D 盘 vhdx 内）：
-- `postgres_data`、`qdrant_data`、`redis_data`
+WSL 内原有的本地 PostgreSQL 14 和 Redis 已停止并禁用自启（`systemctl disable`），避免与 Docker 容器端口冲突。如需恢复，重新 `systemctl enable`。
 
 ---
 
-## 启动后端
+## 启动 ScholarPilot（完整流程）
+
+### 1. 启动基础设施（WSL 内）
+
+```bash
+wsl -d Ubuntu-22.04
+cd /mnt/d/ScholarPilot
+docker compose up -d
+docker compose ps    # 等待三个服务 healthy
+```
+
+### 2. 配置 API key（首次）
 
 ```bash
 cd D:/ScholarPilot/backend
-export UV="/c/Users/admin/AppData/Roaming/Python/Python313/Scripts/uv.exe"
-
-# 首次：配置环境变量
 cp .env.example .env
 # 编辑 .env，填入 LLM_API_KEY 和 EMBEDDING_API_KEY
-
-# 首次：运行数据库迁移
-"$UV" run alembic upgrade head
-
-# 启动 API
-"$UV" run uvicorn app.main:app --reload
-
-# 另开终端：启动 RQ worker（处理 PDF 上传）
-"$UV" run rq worker --url "redis://localhost:6379/0" default
 ```
 
----
+### 3. 运行数据库迁移（首次，Windows 侧）
 
-## 启动前端
+```bash
+export UV="/c/Users/admin/Appdata/Roaming/Python/Python313/Scripts/uv.exe"
+cd D:/ScholarPilot/backend
+"$UV" run alembic upgrade head
+```
+
+### 4. 启动 API（Windows 侧）
+
+```bash
+"$UV" run uvicorn app.main:app --reload    # :8000
+```
+
+### 5. 启动 RQ Worker（WSL 侧，另开终端）
+
+```bash
+wsl -d Ubuntu-22.04
+export PATH="$HOME/.local/bin:$PATH"
+cd /mnt/d/ScholarPilot/backend
+UV_PROJECT_ENVIRONMENT=.venv-wsl uv run rq worker --url "redis://localhost:6379/0" default
+```
+
+### 6. 启动前端（Windows 侧）
 
 ```bash
 cd D:/ScholarPilot/frontend
-pnpm dev
-# 打开 http://localhost:3000
+pnpm dev    # :3000
 ```
+
+### 7. 端到端验证
+
+浏览器打开 http://localhost:3000：
+1. 上传 PDF → 等 status=indexed
+2. 提问 → 看答案和引用
 
 ---
 
-## 端到端验证流程
+## 已验证的端到端流程
 
-1. `docker compose up -d`（WSL 内）
-2. `alembic upgrade head`（建表）
-3. `uvicorn` 启动 API（:8000）
-4. `rq worker` 启动 worker
-5. `pnpm dev` 启动前端（:3000）
-6. 浏览器：上传 PDF → 等 status=indexed → 提问 → 看答案和引用
+- ✅ Docker 三服务启动（postgres/qdrant/redis healthy）
+- ✅ Alembic 迁移建表（documents/chunks/citations）
+- ✅ API 启动（/health, /documents, /docs）
+- ✅ PDF 上传 → 解析（status: parsed, pages: 4）
+- ✅ Qdrant chunks 集合创建
+- ⏳ Embedding + 问答：**需要配置 LLM/Embedding API key**
 
 ---
 
 ## 常见问题
 
 ### `docker` 命令在 Windows 终端不可用
-Docker 装在 WSL 内，**必须在 WSL 终端里执行 docker 命令**。Windows 侧没有 docker CLI。
+Docker 装在 WSL 内，**必须在 WSL 终端执行 docker 命令**。
+
+### RQ worker 报 `os.fork` 错误
+Worker 必须在 WSL（Linux）跑，不能在 Windows 跑。
+
+### 文件路径错误（worker 找不到 PDF）
+文件路径已改为 POSIX 相对路径（`storage/xxx.pdf`）。API 和 worker 都从 backend 目录解析。不要改回绝对路径。
 
 ### WSL 重启后 docker 没启动
-确认 systemd 已启用（`/etc/wsl.conf` 里 `[boot] systemd=true`）。脚本已用 `systemctl enable docker` 配置自启。
+systemd 已启用，docker 已 `systemctl enable`。若没起来，手动 `sudo systemctl start docker`。
 
-### 端口冲突
-PostgreSQL(5432)/Qdrant(6333)/Redis(6379) 端口若被占用，修改 `docker-compose.yml` 的端口映射。
+### 端口冲突（5432/6379）
+WSL 内本地 PostgreSQL/Redis 已禁用。若仍冲突，检查 `ss -tlnp | grep <port>`。

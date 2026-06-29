@@ -48,11 +48,16 @@ def upload_pdf(db: Session, file: UploadFile) -> Document:
         f.write(file.file.read())
 
     title = Path(safe_name).stem
+    # Store a POSIX-style relative path so both the Windows API server and the
+    # Linux RQ worker can resolve it against the backend root. Absolute paths
+    # with OS-specific separators break when API and worker run on different
+    # operating systems sharing one database.
+    relative_path = f"{settings.storage_dir}/{file_name}"
     document = Document(
         doc_id=doc_id,
         title=title,
         source="pdf",
-        file_path=str(file_path),
+        file_path=relative_path,
         status="uploaded",
     )
     document = document_repo.create_document(db, document)

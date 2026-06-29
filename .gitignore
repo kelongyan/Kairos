@@ -53,4 +53,6 @@ pnpm-debug.log*
 # ===== ScholarPilot runtime data =====
 # Uploaded PDFs and parsed artifacts (created at runtime by the backend).
 backend/storage/
+# Test PDFs generated during local testing.
+backend/test_paper.pdf
 
