@@ -116,7 +116,7 @@ GET http://127.0.0.1:8000/agent-runs
 Commit:
 
 ```text
-Pending
+bcc0e4a feat: add Agent run history review
 ```
 
 ---
