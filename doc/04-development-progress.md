@@ -114,7 +114,7 @@ pnpm build
 Commit:
 
 ```text
-Pending
+ac2acb7 feat: persist knowledge operation items
 ```
 
 ---
