@@ -17,7 +17,7 @@
 ```text
 核心 RAG 引擎、知识库产品层和基础 trace 持久化已建立；
 Phase 5 受控 Agent 工作流、Agent run 过滤和确定性知识运营建议已启动；
-P4 知识运营清单持久化已启动，权限/审计/评测仍待补齐。
+P4 知识运营清单持久化和第一版审计日志已启动，权限/评测仍待补齐。
 ```
 
 ---
@@ -71,7 +71,7 @@ P4 知识运营清单持久化已启动，权限/审计/评测仍待补齐。
 | Knowledge gap tracking | In progress | Persisted operation items from no-answer logs, poor feedback, and failed documents |
 | Multi-format ingestion | Not started | PDF only |
 | User auth and RBAC | Not started | Phase 4 |
-| Audit logs | Not started | Phase 4 |
+| Audit logs | In progress | `audit_logs` table, filtered API, frontend panel, and key event capture started |
 | SSE streaming | Not started | Future chat enhancement |
 | Multi-Agent workflow | In progress | Controlled workflow API, persisted step trace, run review UI, filters, and operations list started in Phase 5 |
 | Dashboard | Not started | Phase 6 |
@@ -79,6 +79,48 @@ P4 知识运营清单持久化已启动，权限/审计/评测仍待补齐。
 ---
 
 ## 5. Progress Log
+
+### 2026-06-30 — Phase 4 audit logs
+
+Continued Phase 4 closeout by adding the first persisted audit-log slice.
+
+Implemented in this iteration:
+
+- Added `audit_logs` ORM model and Alembic migration.
+- Added repository, service, schema, and `GET /audit-logs` API with filters for knowledge base, action, resource, actor, and date range.
+- Recorded audit events for document upload, document reindex, feedback submission, Agent run creation, Agent run detail review, and knowledge operation item status updates.
+- Kept audit writes best-effort so a logging failure does not break the primary workflow.
+- Added a frontend Audit Logs panel scoped to the selected knowledge base.
+- Changed Agent run selection to load the detail endpoint so review actions are audit logged.
+- Added API and service tests for audit log filtering, serialization, persistence calls, and best-effort failure handling.
+
+Verification recorded:
+
+```text
+cd backend
+.\.venv\Scripts\python.exe -m pytest
+# 52 passed, 1 warning
+.\.venv\Scripts\python.exe -m ruff check
+# All checks passed
+.\.venv\Scripts\python.exe -m alembic heads
+# b2c3d4e5f6a7 (head)
+.\.venv\Scripts\python.exe -m alembic upgrade head
+# upgraded a1d2e3f4b5c6 -> b2c3d4e5f6a7
+
+cd frontend
+pnpm lint
+# ok
+pnpm build
+# compiled successfully
+```
+
+Commit:
+
+```text
+5a27f94 feat: add audit logs
+```
+
+---
 
 ### 2026-06-30 — Phase 4 knowledge operations item persistence
 
@@ -593,10 +635,8 @@ Phase 5: Multi-Agent Orchestration
 
 Recommended next tasks:
 
-1. Apply the new `agent_runs` migration in a real local database.
-2. Apply the new `knowledge_operation_items` migration in a real local database.
-3. Run an end-to-end Agent workflow and operations-item handling flow against an indexed knowledge base.
-4. Add audit logs for document upload, reindex, feedback, Agent run review, and operation item handling actions.
-5. Add repeatable evaluation API using fixed QA sets plus chat/agent trace artifacts.
-6. Add minimal auth/RBAC boundaries for administrators, knowledge-base managers, and users.
-7. Decide whether the current in-repo state machine should be replaced by LangGraph after P5 contracts stabilize.
+1. Apply the new `audit_logs` migration in any database that has not run `b2c3d4e5f6a7`.
+2. Run an end-to-end Agent workflow and operations-item handling flow against an indexed knowledge base, then verify the Audit Logs panel shows the events.
+3. Add repeatable evaluation API using fixed QA sets plus chat/agent trace artifacts.
+4. Add minimal auth/RBAC boundaries for administrators, knowledge-base managers, and users.
+5. Decide whether the current in-repo state machine should be replaced by LangGraph after P5 contracts stabilize.
