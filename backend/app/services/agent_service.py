@@ -281,7 +281,17 @@ def create_agent_run(
         )
         for step in result.agent_steps
     ]
-    return agent_run_repo.create_agent_run(db, run, steps)
+    persisted = agent_run_repo.create_agent_run(db, run, steps)
+
+    from app.services import knowledge_operations_service
+
+    try:
+        knowledge_operations_service.sync_agent_run_item(db, run_id=persisted.run_id)
+    except Exception:  # noqa: BLE001
+        rollback = getattr(db, "rollback", None)
+        if callable(rollback):
+            rollback()
+    return persisted
 
 
 def list_agent_run_responses(

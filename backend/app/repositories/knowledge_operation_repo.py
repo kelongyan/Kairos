@@ -44,12 +44,18 @@ def list_items(
     *,
     knowledge_base_id: str | None = None,
     status: str | None = None,
+    source_type: str | None = None,
+    source_id: str | None = None,
 ) -> list[KnowledgeOperationItem]:
     query = select(KnowledgeOperationItem)
     if knowledge_base_id:
         query = query.where(KnowledgeOperationItem.knowledge_base_id == knowledge_base_id)
     if status:
         query = query.where(KnowledgeOperationItem.status == status)
+    if source_type:
+        query = query.where(KnowledgeOperationItem.source_type == source_type)
+    if source_id:
+        query = query.where(KnowledgeOperationItem.source_id == source_id)
     return list(
         db.scalars(
             query.order_by(

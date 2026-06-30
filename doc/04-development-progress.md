@@ -718,6 +718,40 @@ da3df08 feat: scaffold Phase 0 project foundation (backend + frontend)
 
 ---
 
+### 2026-06-30 — Phase 5 Agent operations closure
+
+Continued Phase 5 by closing the Agent-to-operations loop with persisted linkage and UI entry points.
+
+Implemented in this iteration:
+
+- Added `agent_run_id` to `knowledge_operation_items` plus a new Alembic migration and foreign key to `agent_runs`.
+- Added best-effort Agent run sync inside `agent_service.create_agent_run()`.
+- Added `source_type` and `source_id` filtering to persisted knowledge operation item listing.
+- Added `run_id` support to `/knowledge-operations/suggestions` so a specific Agent run can surface its operation item.
+- Added frontend source-type filtering for operations, including `agent_run`.
+- Added a run-scoped operations entry point from Agent history and a clear-filter affordance in the operations panel.
+- Added backend service/API coverage for Agent-run sync, deduplication, filtering, and suggestion lookup.
+
+Verification recorded:
+
+```text
+cd backend
+.\.venv\Scripts\python.exe -m alembic upgrade head
+# upgraded c3d4e5f6a7b8 -> d4e5f6a7b8c9
+.\.venv\Scripts\python.exe -m pytest
+# 68 passed, 1 warning
+.\.venv\Scripts\python.exe -m ruff check
+# All checks passed
+
+cd frontend
+pnpm lint
+# ok
+pnpm build
+# compiled successfully
+```
+
+---
+
 ## 6. Next Recommended Implementation Phase
 
 Next phase:

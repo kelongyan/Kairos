@@ -29,6 +29,7 @@ import type {
   KnowledgeOperationItemListResponse,
   KnowledgeOperationItemResponse,
   KnowledgeOperationItemUpdateRequest,
+  KnowledgeOperationSuggestionListResponse,
 } from "./types";
 
 const API_BASE_URL =
@@ -310,7 +311,9 @@ export class ApiClient {
 
   async listKnowledgeOperationItems(
     knowledgeBaseId?: string | null,
-    status?: string | null
+    status?: string | null,
+    sourceType?: string | null,
+    sourceId?: string | null
   ): Promise<KnowledgeOperationItemListResponse> {
     const url = new URL(`${this.baseUrl}/knowledge-operations/items`);
     if (knowledgeBaseId) {
@@ -319,11 +322,35 @@ export class ApiClient {
     if (status) {
       url.searchParams.set("status", status);
     }
+    if (sourceType) {
+      url.searchParams.set("source_type", sourceType);
+    }
+    if (sourceId) {
+      url.searchParams.set("source_id", sourceId);
+    }
     const res = await fetch(url, { headers: this.headers() });
     if (!res.ok) {
       throw new Error(`List knowledge operation items failed: ${res.status}`);
     }
     return res.json() as Promise<KnowledgeOperationItemListResponse>;
+  }
+
+  async listKnowledgeOperationSuggestions(
+    knowledgeBaseId?: string | null,
+    runId?: string | null
+  ): Promise<KnowledgeOperationSuggestionListResponse> {
+    const url = new URL(`${this.baseUrl}/knowledge-operations/suggestions`);
+    if (knowledgeBaseId) {
+      url.searchParams.set("knowledge_base_id", knowledgeBaseId);
+    }
+    if (runId) {
+      url.searchParams.set("run_id", runId);
+    }
+    const res = await fetch(url, { headers: this.headers() });
+    if (!res.ok) {
+      throw new Error(`List knowledge operation suggestions failed: ${res.status}`);
+    }
+    return res.json() as Promise<KnowledgeOperationSuggestionListResponse>;
   }
 
   async updateKnowledgeOperationItem(

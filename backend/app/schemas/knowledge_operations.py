@@ -25,6 +25,7 @@ class KnowledgeOperationItemResponse(BaseModel):
     knowledge_base_id: str | None = None
     doc_id: str | None = None
     question_log_id: str | None = None
+    agent_run_id: str | None = None
     source_type: str
     source_id: str
     suggestion_type: str
@@ -54,11 +55,14 @@ class KnowledgeOperationItemListResponse(BaseModel):
 class KnowledgeOperationSuggestionResponse(BaseModel):
     """Backward-compatible generated suggestion representation."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     suggestion_id: str
     item_id: str
     knowledge_base_id: str | None = None
     doc_id: str | None = None
     question_log_id: str | None = None
+    agent_run_id: str | None = None
     source_type: str
     source_id: str
     suggestion_type: str

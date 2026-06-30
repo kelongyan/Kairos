@@ -317,6 +317,7 @@ export interface KnowledgeOperationItemResponse {
   knowledge_base_id?: string | null;
   doc_id?: string | null;
   question_log_id?: string | null;
+  agent_run_id?: string | null;
   source_type: string;
   source_id: string;
   suggestion_type: string;
@@ -337,4 +338,28 @@ export interface KnowledgeOperationItemListResponse {
 export interface KnowledgeOperationItemUpdateRequest {
   status: KnowledgeOperationStatus;
   resolution_note?: string;
+}
+
+export interface KnowledgeOperationSuggestionResponse {
+  suggestion_id: string;
+  item_id: string;
+  knowledge_base_id?: string | null;
+  doc_id?: string | null;
+  question_log_id?: string | null;
+  agent_run_id?: string | null;
+  source_type: string;
+  source_id: string;
+  suggestion_type: string;
+  severity: string;
+  title: string;
+  description: string;
+  suggested_action: string;
+  status: KnowledgeOperationStatus;
+  resolution_note: string;
+  evidence: Array<Record<string, unknown>>;
+  created_at?: string | null;
+}
+
+export interface KnowledgeOperationSuggestionListResponse {
+  suggestions: KnowledgeOperationSuggestionResponse[];
 }

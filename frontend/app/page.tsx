@@ -36,6 +36,7 @@ export default function Home() {
   const [trace, setTrace] = useState<RetrievalTraceResponse | null>(null);
   const [agentSteps, setAgentSteps] = useState<AgentStepResponse[]>([]);
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
+  const [selectedOperationsRunId, setSelectedOperationsRunId] = useState<string | null>(null);
 
   const currentUserQuery = useQuery({
     queryKey: ["auth-me"],
@@ -86,6 +87,7 @@ export default function Home() {
                 setTrace(null);
                 setAgentSteps([]);
                 setSelectedAgentRunId(null);
+                setSelectedOperationsRunId(null);
               }}
             />
             <DocumentList
@@ -98,6 +100,7 @@ export default function Home() {
                 setTrace(null);
                 setAgentSteps([]);
                 setSelectedAgentRunId(null);
+                setSelectedOperationsRunId(null);
               }}
               onSelect={(doc) => {
                 setSelectedDoc(doc);
@@ -105,10 +108,15 @@ export default function Home() {
                 setTrace(null);
                 setAgentSteps([]);
                 setSelectedAgentRunId(null);
+                setSelectedOperationsRunId(null);
               }}
             />
             {canManage && (
-              <KnowledgeOperationsPanel knowledgeBaseId={selectedKnowledgeBaseId} />
+              <KnowledgeOperationsPanel
+                knowledgeBaseId={selectedKnowledgeBaseId}
+                selectedRunId={selectedOperationsRunId}
+                onClearRunFilter={() => setSelectedOperationsRunId(null)}
+              />
             )}
           </div>
         </aside>
@@ -128,6 +136,7 @@ export default function Home() {
               setTrace(nextTrace);
               setAgentSteps(nextAgentSteps ?? []);
               setSelectedAgentRunId(nextAgentRunId ?? null);
+              setSelectedOperationsRunId(nextAgentRunId ?? null);
             }}
           />
         </main>
@@ -140,10 +149,12 @@ export default function Home() {
                 selectedRunId={selectedAgentRunId}
                 onSelect={(run: AgentRunResponse) => {
                   setSelectedAgentRunId(run.run_id);
+                  setSelectedOperationsRunId(run.run_id);
                   setCitations(run.citations);
                   setTrace(run.trace ?? null);
                   setAgentSteps(run.agent_steps);
                 }}
+                onInspectOperations={(runId) => setSelectedOperationsRunId(runId)}
               />
             )}
             {canAdmin && <AuditLogPanel knowledgeBaseId={selectedKnowledgeBaseId} />}

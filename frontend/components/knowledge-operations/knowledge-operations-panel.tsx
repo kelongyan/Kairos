@@ -23,6 +23,14 @@ const STATUS_OPTIONS = [
   { label: "Document added", value: "document_added" },
 ];
 
+const SOURCE_TYPE_OPTIONS = [
+  { label: "All sources", value: "" },
+  { label: "Question logs", value: "question_log" },
+  { label: "Answer feedback", value: "answer_feedback" },
+  { label: "Documents", value: "document" },
+  { label: "Agent runs", value: "agent_run" },
+];
+
 const ACTIONS: Array<{
   label: string;
   status: KnowledgeOperationStatus;
@@ -36,17 +44,35 @@ const ACTIONS: Array<{
 
 export function KnowledgeOperationsPanel({
   knowledgeBaseId,
+  selectedRunId,
+  onClearRunFilter,
 }: {
   knowledgeBaseId: string | null;
+  selectedRunId?: string | null;
+  onClearRunFilter?: () => void;
 }) {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("pending");
+  const [sourceTypeFilter, setSourceTypeFilter] = useState("");
 
-  const queryKey = ["knowledge-operation-items", knowledgeBaseId, statusFilter];
+  const visibleSourceType = selectedRunId ? "agent_run" : sourceTypeFilter;
+
+  const queryKey = [
+    "knowledge-operation-items",
+    knowledgeBaseId,
+    statusFilter,
+    visibleSourceType,
+    selectedRunId ?? "",
+  ];
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey,
     queryFn: () =>
-      apiClient.listKnowledgeOperationItems(knowledgeBaseId, statusFilter || null),
+      apiClient.listKnowledgeOperationItems(
+        knowledgeBaseId,
+        statusFilter || null,
+        visibleSourceType || null,
+        selectedRunId ?? null
+      ),
     staleTime: 10_000,
     enabled: Boolean(knowledgeBaseId),
   });
@@ -93,6 +119,16 @@ export function KnowledgeOperationsPanel({
         </button>
       </div>
 
+      {selectedRunId && onClearRunFilter && (
+        <button
+          type="button"
+          onClick={onClearRunFilter}
+          className="self-start text-[10px] font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+        >
+          Showing Agent run {selectedRunId}
+        </button>
+      )}
+
       <select
         value={statusFilter}
         onChange={(event) => setStatusFilter(event.target.value)}
@@ -100,6 +136,19 @@ export function KnowledgeOperationsPanel({
         className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs text-zinc-600 disabled:bg-zinc-50 disabled:text-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:disabled:bg-zinc-900/50"
       >
         {STATUS_OPTIONS.map((option) => (
+          <option key={option.label} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+
+      <select
+        value={visibleSourceType}
+        onChange={(event) => setSourceTypeFilter(event.target.value)}
+        disabled={!knowledgeBaseId || Boolean(selectedRunId)}
+        className="rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-xs text-zinc-600 disabled:bg-zinc-50 disabled:text-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:disabled:bg-zinc-900/50"
+      >
+        {SOURCE_TYPE_OPTIONS.map((option) => (
           <option key={option.label} value={option.value}>
             {option.label}
           </option>
@@ -167,7 +216,7 @@ function OperationItemCard({
         {item.suggested_action}
       </p>
       <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-zinc-400">
-        <span>{formatLabel(item.suggestion_type)}</span>
+        <span>{formatLabel(item.source_type)}</span>
         <span>{formatLabel(item.status)}</span>
       </div>
       {item.status === "pending" && (

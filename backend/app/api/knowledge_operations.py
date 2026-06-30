@@ -12,11 +12,13 @@ from app.core.auth import (
     require_min_role,
 )
 from app.core.db import get_db
+from app.repositories import agent_run_repo
 from app.schemas.knowledge_operations import (
     KnowledgeOperationItemListResponse,
     KnowledgeOperationItemResponse,
     KnowledgeOperationItemUpdateRequest,
     KnowledgeOperationSuggestionListResponse,
+    KnowledgeOperationSuggestionResponse,
 )
 from app.services import audit_log_service, knowledge_operations_service
 
@@ -27,6 +29,8 @@ router = APIRouter(prefix="/knowledge-operations", tags=["knowledge-operations"]
 async def list_items(
     knowledge_base_id: str | None = None,
     status: str | None = None,
+    source_type: str | None = None,
+    source_id: str | None = None,
     db: Session = Depends(get_db),
     current_user: CurrentUser = Depends(require_min_role("kb_manager")),
 ) -> KnowledgeOperationItemListResponse:
@@ -36,6 +40,8 @@ async def list_items(
         db,
         knowledge_base_id=knowledge_base_id,
         status=status,
+        source_type=source_type,
+        source_id=source_id,
     )
     items = filter_by_knowledge_base_access(
         items,
@@ -90,17 +96,28 @@ async def update_item(
 @router.get("/suggestions", response_model=KnowledgeOperationSuggestionListResponse)
 async def list_suggestions(
     knowledge_base_id: str | None = None,
+    run_id: str | None = None,
     db: Session = Depends(get_db),
     current_user: CurrentUser = Depends(require_min_role("kb_manager")),
 ) -> KnowledgeOperationSuggestionListResponse:
     """List generated knowledge operations suggestions."""
-    require_knowledge_base_access(current_user, knowledge_base_id)
-    suggestions = knowledge_operations_service.list_suggestions(
-        db,
-        knowledge_base_id=knowledge_base_id,
-    )
+    if run_id is not None:
+        run = agent_run_repo.get_agent_run(db, run_id)
+        if run is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Agent run not found: {run_id}",
+            )
+        require_knowledge_base_access(current_user, run.knowledge_base_id)
+        suggestions = knowledge_operations_service.list_run_suggestions(db, run_id=run_id)
+    else:
+        require_knowledge_base_access(current_user, knowledge_base_id)
+        suggestions = knowledge_operations_service.list_suggestions(
+            db,
+            knowledge_base_id=knowledge_base_id,
+        )
     suggestions = [
-        suggestion
+        KnowledgeOperationSuggestionResponse.model_validate(suggestion)
         for suggestion in suggestions
         if current_user.can_access_knowledge_base(suggestion.knowledge_base_id)
     ]

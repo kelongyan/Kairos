@@ -40,6 +40,12 @@ class KnowledgeOperationItem(Base):
         nullable=True,
         index=True,
     )
+    agent_run_id: Mapped[str | None] = mapped_column(
+        String(128),
+        ForeignKey("agent_runs.run_id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     source_type: Mapped[str] = mapped_column(String(64), default="", index=True)
     source_id: Mapped[str] = mapped_column(String(128), default="", index=True)
     suggestion_type: Mapped[str] = mapped_column(String(64), default="", index=True)

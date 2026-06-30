@@ -30,10 +30,12 @@ export function AgentRunHistory({
   knowledgeBaseId,
   selectedRunId,
   onSelect,
+  onInspectOperations,
 }: {
   knowledgeBaseId: string | null;
   selectedRunId: string | null;
   onSelect: (run: AgentRunResponse) => void;
+  onInspectOperations?: (runId: string) => void;
 }) {
   const queryClient = useQueryClient();
   const [scopeToCurrentKb, setScopeToCurrentKb] = useState(true);
@@ -161,15 +163,22 @@ export function AgentRunHistory({
         <ul className="flex max-h-64 flex-col gap-2 overflow-auto pr-1">
           {runs.slice(0, 8).map((run) => (
             <li key={run.run_id}>
-              <button
-                type="button"
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => selectRunMutation.mutate(run.run_id)}
-                disabled={selectRunMutation.isPending}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    selectRunMutation.mutate(run.run_id);
+                  }
+                }}
+                aria-disabled={selectRunMutation.isPending}
                 className={`w-full rounded-md border p-2 text-left transition ${
                   selectedRunId === run.run_id
                     ? "border-zinc-900 bg-zinc-100 dark:border-zinc-100 dark:bg-zinc-800"
                     : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
-                }`}
+                } ${selectRunMutation.isPending ? "pointer-events-none opacity-60" : ""}`}
               >
                 <div className="mb-1 flex items-center justify-between gap-2 text-xs">
                   <span className="font-medium text-zinc-700 dark:text-zinc-300">
@@ -186,11 +195,25 @@ export function AgentRunHistory({
                   <span>{run.agent_steps.length} steps</span>
                   <span>{run.citations.length} citations</span>
                 </div>
+                {onInspectOperations && (
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onInspectOperations(run.run_id);
+                      }}
+                      className="text-[10px] font-medium text-zinc-500 underline-offset-2 hover:underline dark:text-zinc-400"
+                    >
+                      View operations
+                    </button>
+                  </div>
+                )}
                 {selectRunMutation.isPending &&
                   selectRunMutation.variables === run.run_id && (
                     <p className="mt-1 text-xs text-zinc-400">Loading detail...</p>
                   )}
-              </button>
+              </div>
             </li>
           ))}
         </ul>
