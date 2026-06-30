@@ -4,6 +4,19 @@ from app.schemas.agent import AgentRunListResponse, AgentRunRequest, AgentRunRes
 from app.schemas.chat import ChatRequest, ChatResponse, CitationResponse
 from app.schemas.chat_trace import ChatTraceListResponse, ChatTraceResponse
 from app.schemas.document import ChunkResponse, DocumentListResponse, DocumentResponse
+from app.schemas.evaluation import (
+    EvaluationDatasetDetailResponse,
+    EvaluationDatasetListResponse,
+    EvaluationDatasetQuestionResponse,
+    EvaluationDatasetResponse,
+    EvaluationExecutionMode,
+    EvaluationItemStatus,
+    EvaluationRunCreateRequest,
+    EvaluationRunItemResponse,
+    EvaluationRunListResponse,
+    EvaluationRunResponse,
+    EvaluationRunStatus,
+)
 from app.schemas.knowledge_base import (
     KnowledgeBaseCreateRequest,
     KnowledgeBaseListResponse,
@@ -37,6 +50,17 @@ __all__ = [
     "ChunkResponse",
     "DocumentListResponse",
     "DocumentResponse",
+    "EvaluationDatasetDetailResponse",
+    "EvaluationDatasetListResponse",
+    "EvaluationDatasetQuestionResponse",
+    "EvaluationDatasetResponse",
+    "EvaluationExecutionMode",
+    "EvaluationItemStatus",
+    "EvaluationRunCreateRequest",
+    "EvaluationRunItemResponse",
+    "EvaluationRunListResponse",
+    "EvaluationRunResponse",
+    "EvaluationRunStatus",
     "KnowledgeBaseCreateRequest",
     "KnowledgeBaseListResponse",
     "KnowledgeBaseResponse",

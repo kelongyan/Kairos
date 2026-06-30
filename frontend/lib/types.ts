@@ -150,6 +150,95 @@ export interface AuditLogListFilters {
   created_to?: string | null;
 }
 
+export interface EvaluationDatasetQuestionResponse {
+  sequence: number;
+  question: string;
+  expected_keywords: string[];
+  notes: string;
+}
+
+export interface EvaluationDatasetResponse {
+  dataset_key: string;
+  name: string;
+  description: string;
+  source_uri: string;
+  question_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EvaluationDatasetDetailResponse extends EvaluationDatasetResponse {
+  questions: EvaluationDatasetQuestionResponse[];
+}
+
+export interface EvaluationDatasetListResponse {
+  evaluation_datasets: EvaluationDatasetResponse[];
+}
+
+export type EvaluationExecutionMode = "chat" | "agent";
+export type EvaluationRunStatus = "running" | "completed" | "failed";
+export type EvaluationItemStatus = "passed" | "failed" | "error";
+
+export interface EvaluationRunCreateRequest {
+  dataset_key?: string;
+  knowledge_base_id?: string | null;
+  doc_id?: string | null;
+  execution_mode?: EvaluationExecutionMode;
+  max_steps?: number;
+}
+
+export interface EvaluationRunItemResponse {
+  item_id: string;
+  sequence: number;
+  question: string;
+  expected_keywords: string[];
+  matched_keywords: string[];
+  missing_keywords: string[];
+  answer: string;
+  answer_status: string;
+  execution_route: string;
+  status: EvaluationItemStatus;
+  error_message: string;
+  latency_ms: number;
+  question_log_id?: string | null;
+  chat_trace_id?: string | null;
+  agent_run_id?: string | null;
+  created_at: string;
+}
+
+export interface EvaluationRunResponse {
+  run_id: string;
+  dataset_key: string;
+  dataset_name: string;
+  knowledge_base_id?: string | null;
+  doc_id?: string | null;
+  execution_mode: EvaluationExecutionMode;
+  status: EvaluationRunStatus;
+  question_count: number;
+  passed_count: number;
+  failed_count: number;
+  average_latency_ms: number;
+  pass_rate: number;
+  summary_json: Record<string, unknown>;
+  items: EvaluationRunItemResponse[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EvaluationRunListResponse {
+  evaluation_runs: EvaluationRunResponse[];
+}
+
+export interface EvaluationRunListFilters {
+  dataset_key?: string | null;
+  knowledge_base_id?: string | null;
+  doc_id?: string | null;
+  execution_mode?: string | null;
+  status?: string | null;
+  created_from?: string | null;
+  created_to?: string | null;
+}
+
 export interface KnowledgeBaseResponse {
   knowledge_base_id: string;
   name: string;

@@ -15,6 +15,12 @@ import type {
   ChatResponse,
   DocumentListResponse,
   DocumentResponse,
+  EvaluationDatasetDetailResponse,
+  EvaluationDatasetListResponse,
+  EvaluationRunCreateRequest,
+  EvaluationRunListFilters,
+  EvaluationRunListResponse,
+  EvaluationRunResponse,
   KnowledgeBaseCreateRequest,
   KnowledgeBaseListResponse,
   KnowledgeBaseResponse,
@@ -148,6 +154,63 @@ export class ApiClient {
       throw new Error(`List audit logs failed: ${res.status}`);
     }
     return res.json() as Promise<AuditLogListResponse>;
+  }
+
+  async listEvaluationDatasets(): Promise<EvaluationDatasetListResponse> {
+    const res = await fetch(`${this.baseUrl}/evaluations/datasets`);
+    if (!res.ok) {
+      throw new Error(`List evaluation datasets failed: ${res.status}`);
+    }
+    return res.json() as Promise<EvaluationDatasetListResponse>;
+  }
+
+  async getEvaluationDataset(
+    datasetKey: string
+  ): Promise<EvaluationDatasetDetailResponse> {
+    const res = await fetch(`${this.baseUrl}/evaluations/datasets/${datasetKey}`);
+    if (!res.ok) {
+      throw new Error(`Get evaluation dataset failed: ${res.status}`);
+    }
+    return res.json() as Promise<EvaluationDatasetDetailResponse>;
+  }
+
+  async createEvaluationRun(
+    request: EvaluationRunCreateRequest
+  ): Promise<EvaluationRunResponse> {
+    const res = await fetch(`${this.baseUrl}/evaluations/runs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new Error(`Create evaluation run failed: ${res.status} ${detail}`);
+    }
+    return res.json() as Promise<EvaluationRunResponse>;
+  }
+
+  async listEvaluationRuns(
+    filters: EvaluationRunListFilters = {}
+  ): Promise<EvaluationRunListResponse> {
+    const url = new URL(`${this.baseUrl}/evaluations/runs`);
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) {
+        url.searchParams.set(key, value);
+      }
+    }
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`List evaluation runs failed: ${res.status}`);
+    }
+    return res.json() as Promise<EvaluationRunListResponse>;
+  }
+
+  async getEvaluationRun(runId: string): Promise<EvaluationRunResponse> {
+    const res = await fetch(`${this.baseUrl}/evaluations/runs/${runId}`);
+    if (!res.ok) {
+      throw new Error(`Get evaluation run failed: ${res.status}`);
+    }
+    return res.json() as Promise<EvaluationRunResponse>;
   }
 
   async listKnowledgeBases(): Promise<KnowledgeBaseListResponse> {

@@ -15,6 +15,7 @@ import { ChatPanel } from "@/components/chat/chat-panel";
 import { CitationPanel } from "@/components/citation/citation-panel";
 import { AgentRunHistory } from "@/components/agent/agent-run-history";
 import { AuditLogPanel } from "@/components/audit/audit-log-panel";
+import { EvaluationPanel } from "@/components/evaluation/evaluation-panel";
 import { KnowledgeOperationsPanel } from "@/components/knowledge-operations/knowledge-operations-panel";
 
 /**
@@ -128,6 +129,7 @@ export default function Home() {
               }}
             />
             <AuditLogPanel knowledgeBaseId={selectedKnowledgeBaseId} />
+            <EvaluationPanel knowledgeBaseId={selectedKnowledgeBaseId} />
             <CitationPanel citations={citations} trace={trace} agentSteps={agentSteps} />
           </div>
         </aside>
