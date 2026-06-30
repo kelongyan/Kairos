@@ -293,14 +293,14 @@ Phase 6  生产化、统计看板与扩展生态
 
 ## 11. 当前开发建议
 
-Phase 2 收尾已完成。进入 Phase 3 后，避免同时启动复杂权限、Agent 和大屏看板，先把知识库实体、多文档检索和最小知识运营信号打稳。
+Phase 5 已启动，当前已有受控 Agent 固定工作流、Agent run/step 持久化和前端 run 回看入口。下一步不要直接扩张到开放式工具市场或跨系统 Agent，而是继续围绕“可回放、可评测、可运营”的受控工作流补齐产品闭环。
 
 推荐拆分顺序：
 
-1. 数据模型：`KnowledgeBase`、文档归属字段、迁移。
-2. API：知识库 CRUD、按知识库列文档。
-3. 检索：`knowledge_base_id` 多文档 retrieval。
-4. Chat：兼容 `doc_id`，新增 `knowledge_base_id`。
-5. 反馈：记录用户问题、答案、引用、证据不足和基础反馈。
-6. 前端：知识库切换、文档分组、知识库级提问、最小反馈入口。
-7. 测试：模型、API、检索范围、反馈记录和前端构建。
+1. Agent run 过滤：按知识库、route、status、answer_status 和时间范围查看历史执行。
+2. Knowledge Operations Agent：基于证据不足问题和低质量反馈生成 FAQ 草稿、补文档建议或重建索引建议。
+3. P4 知识运营清单：无答案问题、低质量引用、解析失败文档、索引失败文档。
+4. 审计日志：文档上传、reindex、反馈、Agent run 查看等关键操作。
+5. 评测 API：固定 QA 集、运行记录、结果查看，并复用 chat trace 与 agent trace。
+6. 最小 auth/RBAC：先实现管理员、知识库管理员、普通用户的基础边界。
+7. LangGraph 评估：仅在当前状态机 API 契约稳定后替换内部 runner，不改变外部 `/agent-runs` 契约。

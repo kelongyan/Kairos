@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import type {
   AgentRunResponse,
@@ -39,12 +39,14 @@ export function ChatPanel({
     citations: ChatResponse["citations"];
     trace: RetrievalTraceResponse | null;
     agentSteps?: AgentStepResponse[];
+    agentRunId?: string | null;
   }) => void;
 }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [askMode, setAskMode] = useState<AskMode>("chat");
   const [feedbackMessageId, setFeedbackMessageId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -94,7 +96,11 @@ export function ChatPanel({
         citations: result.data.citations,
         trace: result.data.trace ?? null,
         agentSteps,
+        agentRunId: result.kind === "agent" ? result.data.run_id : null,
       });
+      if (result.kind === "agent") {
+        queryClient.invalidateQueries({ queryKey: ["agent-runs"] });
+      }
     },
     onError: (err: Error, variables) => {
       setMessages((prev) => [

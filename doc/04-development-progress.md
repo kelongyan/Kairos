@@ -72,12 +72,54 @@ Phase 5 受控 Agent 工作流已启动，P4 权限/审计/运营清单仍待补
 | User auth and RBAC | Not started | Phase 4 |
 | Audit logs | Not started | Phase 4 |
 | SSE streaming | Not started | Future chat enhancement |
-| Multi-Agent workflow | In progress | Controlled workflow API and step trace started in Phase 5 |
+| Multi-Agent workflow | In progress | Controlled workflow API, persisted step trace, and run review UI started in Phase 5 |
 | Dashboard | Not started | Phase 6 |
 
 ---
 
 ## 5. Progress Log
+
+### 2026-06-30 — Phase 5 Agent run review UI
+
+Continued Phase 5 by exposing persisted Agent runs in the workspace UI.
+
+Implemented in this iteration:
+
+- Added frontend API client methods for `/agent-runs` list and detail.
+- Added shared frontend type for `AgentRunListResponse`.
+- Added Agent run history panel showing recent route, status, latency, step count, citation count, and question.
+- Selecting a persisted Agent run now loads its citations, retrieval trace, and Agent step trace into the right-hand review panel.
+- Agent mode responses now invalidate the Agent run history query so new runs appear without a page reload.
+
+Verification recorded:
+
+```text
+cd backend
+.\.venv\Scripts\python.exe -m pytest
+# 42 passed, 1 warning
+.\.venv\Scripts\python.exe -m ruff check
+# All checks passed
+
+cd frontend
+pnpm lint
+# ok
+pnpm build
+# compiled successfully
+
+Runtime check:
+GET http://127.0.0.1:3000
+# 200
+GET http://127.0.0.1:8000/agent-runs
+# returned persisted Agent runs
+```
+
+Commit:
+
+```text
+Pending
+```
+
+---
 
 ### 2026-06-30 — Phase 5 started
 
@@ -437,6 +479,7 @@ Recommended next tasks:
 
 1. Apply the new `agent_runs` migration in a real local database.
 2. Run an end-to-end Agent workflow against an indexed knowledge base.
-3. Add richer Agent run list/detail UI for persisted run review.
-4. Decide whether the current in-repo state machine should be replaced by LangGraph after P5 contracts stabilize.
-5. Continue closing P4 gaps: auth/RBAC, audit logs, knowledge operations lists, and repeatable evaluation runs.
+3. Add richer persisted Agent run filters by knowledge base, route, status, and answer status.
+4. Add Knowledge Operations Agent draft generation for no-answer questions and poor feedback.
+5. Decide whether the current in-repo state machine should be replaced by LangGraph after P5 contracts stabilize.
+6. Continue closing P4 gaps: auth/RBAC, audit logs, knowledge operations lists, and repeatable evaluation runs.

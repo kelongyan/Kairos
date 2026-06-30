@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type {
+  AgentRunResponse,
   AgentStepResponse,
   CitationResponse,
   DocumentResponse,
@@ -12,6 +13,7 @@ import { KnowledgeBasePanel } from "@/components/knowledge-base/knowledge-base-p
 import { DocumentList } from "@/components/document/document-list";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { CitationPanel } from "@/components/citation/citation-panel";
+import { AgentRunHistory } from "@/components/agent/agent-run-history";
 
 /**
  * Kairos home page: three-column knowledge workspace.
@@ -27,6 +29,7 @@ export default function Home() {
   const [citations, setCitations] = useState<CitationResponse[]>([]);
   const [trace, setTrace] = useState<RetrievalTraceResponse | null>(null);
   const [agentSteps, setAgentSteps] = useState<AgentStepResponse[]>([]);
+  const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
 
   const selectedKnowledgeBaseId = selectedKnowledgeBase?.knowledge_base_id ?? null;
 
@@ -67,6 +70,7 @@ export default function Home() {
                 setCitations([]);
                 setTrace(null);
                 setAgentSteps([]);
+                setSelectedAgentRunId(null);
               }}
             />
             <DocumentList
@@ -77,12 +81,14 @@ export default function Home() {
                 setCitations([]);
                 setTrace(null);
                 setAgentSteps([]);
+                setSelectedAgentRunId(null);
               }}
               onSelect={(doc) => {
                 setSelectedDoc(doc);
                 setCitations([]);
                 setTrace(null);
                 setAgentSteps([]);
+                setSelectedAgentRunId(null);
               }}
             />
           </div>
@@ -96,16 +102,29 @@ export default function Home() {
               citations: nextCitations,
               trace: nextTrace,
               agentSteps: nextAgentSteps,
+              agentRunId: nextAgentRunId,
             }) => {
               setCitations(nextCitations);
               setTrace(nextTrace);
               setAgentSteps(nextAgentSteps ?? []);
+              setSelectedAgentRunId(nextAgentRunId ?? null);
             }}
           />
         </main>
 
         <aside className="bg-white p-4 dark:bg-zinc-950">
-          <CitationPanel citations={citations} trace={trace} agentSteps={agentSteps} />
+          <div className="flex flex-col gap-4">
+            <AgentRunHistory
+              selectedRunId={selectedAgentRunId}
+              onSelect={(run: AgentRunResponse) => {
+                setSelectedAgentRunId(run.run_id);
+                setCitations(run.citations);
+                setTrace(run.trace ?? null);
+                setAgentSteps(run.agent_steps);
+              }}
+            />
+            <CitationPanel citations={citations} trace={trace} agentSteps={agentSteps} />
+          </div>
         </aside>
       </div>
     </div>

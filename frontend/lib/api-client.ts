@@ -3,6 +3,7 @@
  */
 
 import type {
+  AgentRunListResponse,
   AgentRunRequest,
   AgentRunResponse,
   AnswerFeedbackRequest,
@@ -99,6 +100,22 @@ export class ApiClient {
     if (!res.ok) {
       const detail = await res.text();
       throw new Error(`Agent run failed: ${res.status} ${detail}`);
+    }
+    return res.json() as Promise<AgentRunResponse>;
+  }
+
+  async listAgentRuns(): Promise<AgentRunListResponse> {
+    const res = await fetch(`${this.baseUrl}/agent-runs`);
+    if (!res.ok) {
+      throw new Error(`List Agent runs failed: ${res.status}`);
+    }
+    return res.json() as Promise<AgentRunListResponse>;
+  }
+
+  async getAgentRun(runId: string): Promise<AgentRunResponse> {
+    const res = await fetch(`${this.baseUrl}/agent-runs/${runId}`);
+    if (!res.ok) {
+      throw new Error(`Get Agent run failed: ${res.status}`);
     }
     return res.json() as Promise<AgentRunResponse>;
   }

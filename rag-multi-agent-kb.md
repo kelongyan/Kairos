@@ -368,4 +368,41 @@
 
 ---
 
+## 九、当前实现进度
+
+截至 2026-06-30，Kairos 已按工程路线完成原方案的核心 RAG 基础，并将产品主线调整为“可验证的团队知识库问答与知识运营平台”。当前实现进度如下：
+
+| 阶段 | 当前状态 | 已落地内容 |
+|:---|:---|:---|
+| 工程基础 | 已完成 | FastAPI 后端、Next.js 前端、PostgreSQL/Qdrant/Redis 基础设施、测试与 lint 配置 |
+| 核心 RAG | 已完成 | PDF 上传、解析、chunk、embedding、Qdrant 索引、单文档问答、citations |
+| Hybrid RAG | 已完成 | query rewrite、dense + BM25 sparse retrieval、RRF、reranker 边界、Evidence Pack、retrieval trace |
+| 知识库产品层 | 已完成 | `KnowledgeBase`、文档归属、知识库级文档列表、知识库级 `/chat`、问题记录、基础反馈 |
+| Trace 持久化 | 已启动 | `chat_traces` 表、`/chat-traces` API、问答链路 trace 持久化 |
+| 受控 Multi-Agent | 进行中 | `agent_runs` / `agent_steps`、`/agent-runs` API、planner/retrieval/analyst/writer/reviewer 固定工作流、短链路/多 Agent 自动分流、前端 Chat/Agent 模式、Agent step trace、持久化 Agent run 回看 UI |
+
+当前验证记录：
+
+- 后端测试：`42 passed, 1 warning`。
+- 后端 Ruff：通过。
+- 前端 `pnpm lint`：通过。
+- 前端 `pnpm build`：通过。
+- 真实链路：Docker 基础设施 healthy，Alembic 已升级到 `agent_runs` 迁移，PDF 上传后由 WSL worker 完成索引，`/chat` 和 `/agent-runs` 均返回 citations 与 trace。
+
+当前仍未完成的能力：
+
+- 用户登录、JWT、RBAC 与知识库级访问控制。
+- 审计日志与知识运营清单。
+- 可重复运行的评测 API 和评测结果管理。
+- LangGraph 编排替换、外部搜索工具、Knowledge Operations Agent。
+- 多格式文档解析、SSE 流式输出、多轮会话和生产统计看板。
+
+下一步建议：
+
+1. 继续补齐 P5：Agent run 按知识库、状态、route、answer status 过滤；Knowledge Operations Agent 生成 FAQ 草稿或补文档建议。
+2. 并行收尾 P4：auth/RBAC、audit logs、knowledge operations lists、evaluation API。
+3. 在当前固定状态机 API 契约稳定后，再评估是否引入 LangGraph 替换内部 runner。
+
+---
+
 > **备注**：本文档为项目需求与方案设计文档，具体技术实现细节、接口定义与数据库设计将在后续的技术设计文档中详细阐述。

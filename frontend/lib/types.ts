@@ -112,6 +112,10 @@ export interface AgentRunResponse {
   updated_at?: string | null;
 }
 
+export interface AgentRunListResponse {
+  agent_runs: AgentRunResponse[];
+}
+
 export interface KnowledgeBaseResponse {
   knowledge_base_id: string;
   name: string;
