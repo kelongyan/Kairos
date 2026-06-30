@@ -126,12 +126,13 @@ Continue Phase 5 controlled Agent orchestration while closing remaining Phase 4 
 - BM25 sparse retrieval, RRF fusion, reranker provider boundary.
 - Evidence Pack and retrieval trace returned by `/chat`.
 - Controlled `/agent-runs` workflow with planner, retrieval, analyst, writer, reviewer, and step trace.
+- Persisted knowledge operation items generated from no-answer questions, poor feedback, and failed documents.
 - Frontend document list, chat panel, citation panel, and trace summary.
 
 Not implemented yet:
 
 - Multi-format ingestion beyond PDF.
-- Knowledge gap tracking and richer operations views.
+- Richer operations dashboards and aggregate knowledge gap analytics.
 - Full user auth, RBAC, audit logs, and evaluation API.
 - LangGraph-backed Agent runner.
 

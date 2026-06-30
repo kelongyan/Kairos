@@ -128,7 +128,7 @@ export function ChatPanel({
     onSuccess: (_data, variables) => {
       setFeedbackMessageId(variables.questionLogId);
       queryClient.invalidateQueries({
-        queryKey: ["knowledge-operation-suggestions"],
+        queryKey: ["knowledge-operation-items"],
       });
     },
   });

@@ -15,9 +15,11 @@ import type {
   DocumentResponse,
   KnowledgeBaseCreateRequest,
   KnowledgeBaseListResponse,
-  KnowledgeOperationSuggestionListResponse,
   KnowledgeBaseResponse,
   KnowledgeBaseUpdateRequest,
+  KnowledgeOperationItemListResponse,
+  KnowledgeOperationItemResponse,
+  KnowledgeOperationItemUpdateRequest,
 } from "./types";
 
 const API_BASE_URL =
@@ -185,18 +187,38 @@ export class ApiClient {
     return res.json() as Promise<AnswerFeedbackResponse>;
   }
 
-  async listKnowledgeOperationSuggestions(
-    knowledgeBaseId?: string | null
-  ): Promise<KnowledgeOperationSuggestionListResponse> {
-    const url = new URL(`${this.baseUrl}/knowledge-operations/suggestions`);
+  async listKnowledgeOperationItems(
+    knowledgeBaseId?: string | null,
+    status?: string | null
+  ): Promise<KnowledgeOperationItemListResponse> {
+    const url = new URL(`${this.baseUrl}/knowledge-operations/items`);
     if (knowledgeBaseId) {
       url.searchParams.set("knowledge_base_id", knowledgeBaseId);
     }
+    if (status) {
+      url.searchParams.set("status", status);
+    }
     const res = await fetch(url);
     if (!res.ok) {
-      throw new Error(`List knowledge operation suggestions failed: ${res.status}`);
+      throw new Error(`List knowledge operation items failed: ${res.status}`);
     }
-    return res.json() as Promise<KnowledgeOperationSuggestionListResponse>;
+    return res.json() as Promise<KnowledgeOperationItemListResponse>;
+  }
+
+  async updateKnowledgeOperationItem(
+    itemId: string,
+    request: KnowledgeOperationItemUpdateRequest
+  ): Promise<KnowledgeOperationItemResponse> {
+    const res = await fetch(`${this.baseUrl}/knowledge-operations/items/${itemId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new Error(`Update knowledge operation item failed: ${res.status} ${detail}`);
+    }
+    return res.json() as Promise<KnowledgeOperationItemResponse>;
   }
 }
 

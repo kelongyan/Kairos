@@ -182,21 +182,36 @@ export interface AnswerFeedbackResponse {
   updated_at: string;
 }
 
-export interface KnowledgeOperationSuggestionResponse {
-  suggestion_id: string;
+export type KnowledgeOperationStatus =
+  | "pending"
+  | "resolved"
+  | "ignored"
+  | "reindexed"
+  | "document_added";
+
+export interface KnowledgeOperationItemResponse {
+  item_id: string;
   knowledge_base_id?: string | null;
   doc_id?: string | null;
   question_log_id?: string | null;
+  source_type: string;
+  source_id: string;
   suggestion_type: string;
   severity: string;
   title: string;
   description: string;
   suggested_action: string;
-  status: string;
-  evidence: Record<string, unknown>[];
-  created_at?: string | null;
+  status: KnowledgeOperationStatus;
+  resolution_note: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface KnowledgeOperationSuggestionListResponse {
-  suggestions: KnowledgeOperationSuggestionResponse[];
+export interface KnowledgeOperationItemListResponse {
+  items: KnowledgeOperationItemResponse[];
+}
+
+export interface KnowledgeOperationItemUpdateRequest {
+  status: KnowledgeOperationStatus;
+  resolution_note?: string;
 }

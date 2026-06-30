@@ -6,6 +6,7 @@ from app.models.chat_trace import ChatTrace
 from app.models.citation import Citation
 from app.models.document import Chunk, Document
 from app.models.knowledge_base import KnowledgeBase
+from app.models.knowledge_operation import KnowledgeOperationItem
 from app.models.question_log import AnswerFeedback, QuestionLog
 
 __all__ = [
@@ -18,5 +19,6 @@ __all__ = [
     "Chunk",
     "Document",
     "KnowledgeBase",
+    "KnowledgeOperationItem",
     "QuestionLog",
 ]

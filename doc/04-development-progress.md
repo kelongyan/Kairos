@@ -17,7 +17,7 @@
 ```text
 核心 RAG 引擎、知识库产品层和基础 trace 持久化已建立；
 Phase 5 受控 Agent 工作流、Agent run 过滤和确定性知识运营建议已启动；
-P4 权限/审计/持久化运营清单仍待补齐。
+P4 知识运营清单持久化已启动，权限/审计/评测仍待补齐。
 ```
 
 ---
@@ -68,17 +68,56 @@ P4 权限/审计/持久化运营清单仍待补齐。
 | Knowledge base entity | Done | Phase 3 |
 | Knowledge-base-level QA | Done | Phase 3 |
 | User feedback | Done | Phase 3 |
-| Knowledge gap tracking | In progress | Deterministic suggestions from no-answer logs, poor feedback, and failed documents |
+| Knowledge gap tracking | In progress | Persisted operation items from no-answer logs, poor feedback, and failed documents |
 | Multi-format ingestion | Not started | PDF only |
 | User auth and RBAC | Not started | Phase 4 |
 | Audit logs | Not started | Phase 4 |
 | SSE streaming | Not started | Future chat enhancement |
-| Multi-Agent workflow | In progress | Controlled workflow API, persisted step trace, run review UI, filters, and operations suggestions started in Phase 5 |
+| Multi-Agent workflow | In progress | Controlled workflow API, persisted step trace, run review UI, filters, and operations list started in Phase 5 |
 | Dashboard | Not started | Phase 6 |
 
 ---
 
 ## 5. Progress Log
+
+### 2026-06-30 — Phase 4 knowledge operations item persistence
+
+Continued Phase 4 closeout by turning generated knowledge operation suggestions into persisted actionable items.
+
+Implemented in this iteration:
+
+- Added `knowledge_operation_items` ORM model and Alembic migration.
+- Added repository, service, schema, and API support for persisted operation items.
+- `GET /knowledge-operations/items` now syncs missing generated signals into persisted items before listing them.
+- `PATCH /knowledge-operations/items/{item_id}` updates handling status and resolution notes.
+- Supported statuses: `pending`, `resolved`, `ignored`, `reindexed`, and `document_added`.
+- Kept `/knowledge-operations/suggestions` as a backward-compatible pending-suggestion view backed by persisted items.
+- Updated the frontend Operations panel with status filtering and item handling buttons.
+- Added API and service tests for item sync, deduplication, status updates, and 404 behavior.
+
+Verification recorded:
+
+```text
+cd backend
+.\.venv\Scripts\python.exe -m pytest
+# 48 passed, 1 warning
+.\.venv\Scripts\python.exe -m ruff check
+# All checks passed
+
+cd frontend
+pnpm lint
+# ok
+pnpm build
+# compiled successfully
+```
+
+Commit:
+
+```text
+Pending
+```
+
+---
 
 ### 2026-06-30 — Phase 5 deterministic knowledge operations suggestions
 
@@ -555,9 +594,9 @@ Phase 5: Multi-Agent Orchestration
 Recommended next tasks:
 
 1. Apply the new `agent_runs` migration in a real local database.
-2. Run an end-to-end Agent workflow against an indexed knowledge base.
-3. Persist knowledge operations suggestions as actionable items with handling status.
-4. Add audit logs for document upload, reindex, feedback, and Agent run review actions.
+2. Apply the new `knowledge_operation_items` migration in a real local database.
+3. Run an end-to-end Agent workflow and operations-item handling flow against an indexed knowledge base.
+4. Add audit logs for document upload, reindex, feedback, Agent run review, and operation item handling actions.
 5. Add repeatable evaluation API using fixed QA sets plus chat/agent trace artifacts.
 6. Add minimal auth/RBAC boundaries for administrators, knowledge-base managers, and users.
 7. Decide whether the current in-repo state machine should be replaced by LangGraph after P5 contracts stabilize.

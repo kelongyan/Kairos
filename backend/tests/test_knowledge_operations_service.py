@@ -1,4 +1,4 @@
-"""Tests for generated knowledge operations suggestions."""
+"""Tests for persisted knowledge operation items."""
 
 from __future__ import annotations
 
@@ -42,48 +42,72 @@ class _FailedDocument:
     updated_at = datetime(2026, 6, 30, tzinfo=UTC)
 
 
-def test_list_suggestions_builds_operations_items(monkeypatch) -> None:
-    from app.repositories import document_repo, question_log_repo
+def test_list_items_syncs_generated_operations(monkeypatch) -> None:
+    from app.repositories import (
+        document_repo,
+        knowledge_operation_repo,
+        question_log_repo,
+    )
+
+    created = []
+
+    def fake_create_item(db, item):
+        item.created_at = datetime(2026, 6, 30, tzinfo=UTC)
+        item.updated_at = datetime(2026, 6, 30, tzinfo=UTC)
+        created.append(item)
+        return item
 
     monkeypatch.setattr(
         question_log_repo,
         "list_question_logs",
         lambda db: [_QuestionLog(), _AnsweredQuestionLog()],
     )
+    monkeypatch.setattr(question_log_repo, "list_answer_feedback", lambda db: [_Feedback()])
+    monkeypatch.setattr(document_repo, "list_documents", lambda db: [_FailedDocument()])
     monkeypatch.setattr(
-        question_log_repo,
-        "list_answer_feedback",
-        lambda db: [_Feedback()],
+        knowledge_operation_repo,
+        "get_item_by_source",
+        lambda db, **kwargs: None,
     )
+    monkeypatch.setattr(knowledge_operation_repo, "create_item", fake_create_item)
     monkeypatch.setattr(
-        document_repo,
-        "list_documents",
-        lambda db: [_FailedDocument()],
+        knowledge_operation_repo,
+        "list_items",
+        lambda db, **kwargs: created,
     )
 
-    suggestions = knowledge_operations_service.list_suggestions(
-        object(),
-        knowledge_base_id="kb-1",
-    )
+    items = knowledge_operations_service.list_items(object(), knowledge_base_id="kb-1")
 
-    assert {item.suggestion_type for item in suggestions} == {
+    assert {item.suggestion_type for item in items} == {
         "faq_draft",
         "answer_quality_review",
         "reindex_document",
     }
-    assert all(item.knowledge_base_id == "kb-1" for item in suggestions)
+    assert all(item.status == "pending" for item in items)
 
 
-def test_list_suggestions_filters_by_knowledge_base(monkeypatch) -> None:
-    from app.repositories import document_repo, question_log_repo
+def test_list_items_does_not_duplicate_existing_operations(monkeypatch) -> None:
+    from app.repositories import (
+        document_repo,
+        knowledge_operation_repo,
+        question_log_repo,
+    )
 
     monkeypatch.setattr(question_log_repo, "list_question_logs", lambda db: [_QuestionLog()])
     monkeypatch.setattr(question_log_repo, "list_answer_feedback", lambda db: [])
     monkeypatch.setattr(document_repo, "list_documents", lambda db: [])
-
-    suggestions = knowledge_operations_service.list_suggestions(
-        object(),
-        knowledge_base_id="other-kb",
+    monkeypatch.setattr(
+        knowledge_operation_repo,
+        "get_item_by_source",
+        lambda db, **kwargs: object(),
     )
+    monkeypatch.setattr(
+        knowledge_operation_repo,
+        "create_item",
+        lambda db, item: (_ for _ in ()).throw(AssertionError("unexpected create")),
+    )
+    monkeypatch.setattr(knowledge_operation_repo, "list_items", lambda db, **kwargs: [])
 
-    assert suggestions == []
+    items = knowledge_operations_service.list_items(object(), knowledge_base_id="kb-1")
+
+    assert items == []

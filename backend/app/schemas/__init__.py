@@ -11,6 +11,9 @@ from app.schemas.knowledge_base import (
     KnowledgeBaseUpdateRequest,
 )
 from app.schemas.knowledge_operations import (
+    KnowledgeOperationItemListResponse,
+    KnowledgeOperationItemResponse,
+    KnowledgeOperationItemUpdateRequest,
     KnowledgeOperationSuggestionListResponse,
     KnowledgeOperationSuggestionResponse,
 )
@@ -38,6 +41,9 @@ __all__ = [
     "KnowledgeBaseListResponse",
     "KnowledgeBaseResponse",
     "KnowledgeBaseUpdateRequest",
+    "KnowledgeOperationItemListResponse",
+    "KnowledgeOperationItemResponse",
+    "KnowledgeOperationItemUpdateRequest",
     "KnowledgeOperationSuggestionListResponse",
     "KnowledgeOperationSuggestionResponse",
     "AnswerFeedbackRequest",
